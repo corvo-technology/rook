@@ -22,6 +22,7 @@ import {
   expandSkillReferencesInPrompt,
   formatSkillRunPrompt,
   formatSkillsCatalogInstruction,
+  isAutonomousRunTrigger,
   isBackgroundRunTrigger,
   isCallClientNonce,
   isMessagingChannelRun,
@@ -58,6 +59,7 @@ import {
   ensureBotComputer,
   isPartialReplyClientNonce,
   isTooManyDatabaseConnections,
+  listSurfacedItems,
   loadRunHistoryMessages,
   loadRunThreadRoot,
   loadRunTurnCheckpoint,
@@ -67,6 +69,7 @@ import {
   runTokens,
   settleReleasedTakeoverCards,
   spaceHasModelAccess,
+  surfacedItemsInstruction,
   threadBranchInclude,
 } from "@corvo/db";
 import { enrichLogContext, getLogger } from "@corvo/logging";
@@ -1935,6 +1938,14 @@ export function createRunExecutor(deps: ExecutorDeps) {
                   offeredFleetTools: offeredFleetTools(builtins),
                 }),
                 passInstruction,
+                isAutonomousRunTrigger(run.trigger) && !isBackgroundRunTrigger(run.trigger)
+                  ? surfacedItemsInstruction(
+                      await listSurfacedItems(deps.prisma, {
+                        botId: bot.id,
+                        threadId: thread.id,
+                      }).catch(() => []),
+                    )
+                  : undefined,
                 strongerTier ? STRONGER_MODEL_INSTRUCTION : undefined,
                 run.tierEscalations > 0 && run.escalationReason
                   ? `A faster model asked for you on this task: ${run.escalationReason} Continue from the conversation; do not start over.`

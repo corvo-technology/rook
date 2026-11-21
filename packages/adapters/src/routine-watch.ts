@@ -9,7 +9,7 @@ import type {
 } from "@corvo/adapter-kit";
 import { routineJobKey, routineWakeupJob } from "@corvo/adapter-kit";
 import type { MetaCode, RoutineWatch, RoutineWatchState } from "@corvo/contracts";
-import { RoutineWatchSchema, RoutineWatchStateSchema } from "@corvo/contracts";
+import { RoutineWatchSchema, RoutineWatchStateSchema, TimeZoneSchema } from "@corvo/contracts";
 import type { ActionApprovalRule } from "@corvo/core";
 import { connectorKindFromToolName, watchToolRefusal } from "@corvo/core";
 import type { ComputerMode, PrismaClient, ThreadEvents } from "@corvo/db";
@@ -24,6 +24,14 @@ import { scheduleComputerSleep } from "./computer-idle.js";
 import { ComputerBusyError, provisionComputer } from "./computer-lifecycle.js";
 import { resolveBotWorkspaceCwd, teamBotWorkspaceDirectory } from "./computer-support.js";
 import { connectedContext, selectRunConnections } from "./connection-context.js";
+import type { PresetReading } from "./routine-watch-presets.js";
+import {
+  expandWatchArgs,
+  fencePresetDetail,
+  presetToolName,
+  readCalendarPreset,
+  readEmailPreset,
+} from "./routine-watch-presets.js";
 
 /**
  * The checker behind a routine's "when something changes" trigger. It never
@@ -95,8 +103,10 @@ export function nextRoutineWatchAt(watch: RoutineWatch, from: Date): Date {
 
 /** What a watch looks at, in a few words, for messages and the routine list. */
 export function describeRoutineWatch(watch: RoutineWatch): string {
+  if (watch.preset) return `${watch.preset}: ${watch.tool ?? ""}`;
   if (watch.kind === "files") return (watch.paths ?? []).join(", ");
   if (watch.kind === "command") return `\`${watch.command ?? ""}\``;
+  if (watch.kind === "board") return "stuck tickets on the board";
   return watch.tool ?? "";
 }
 
@@ -110,14 +120,21 @@ export async function checkRoutineWatch(
   const previous = parseRoutineWatchState(routine.watchState);
   const reading =
     watch.kind === "tool"
-      ? await readTool(deps, routine, watch)
-      : await readComputer(deps, routine, watch);
+      ? await readTool(deps, routine, watch, now)
+      : watch.kind === "board"
+        ? await readBoard(deps, routine, now)
+        : await readComputer(deps, routine, watch);
   return compareReading(previous, reading, now);
 }
 
 type Reading = {
   fingerprint: string;
   entries?: Record<string, string>;
+  /**
+   * A preset decides for itself whether the difference is news. It gets the last entries and
+   * returns the note, or null for a difference that is not worth a run (a meeting that ended).
+   */
+  changeNote?: (previous: Record<string, string>, previousCheckedAt: Date | null) => string | null;
   /** Shown when the reading differs from the last one. */
   detail: string | null;
 };
@@ -139,6 +156,12 @@ export function compareReading(
   }
   if (previous.fingerprint === reading.fingerprint) {
     return { changed: false, state: { ...base, outcome: "unchanged", detail: null } };
+  }
+  if (reading.changeNote && previous.entries) {
+    const note = reading.changeNote(previous.entries, new Date(previous.checkedAt));
+    return note === null
+      ? { changed: false, state: { ...base, outcome: "unchanged", detail: null } }
+      : { changed: true, state: { ...base, outcome: "changed", detail: note } };
   }
   const detail =
     reading.entries && previous.entries
@@ -488,10 +511,49 @@ async function run(
   return { stdout, stderr, code };
 }
 
+/** Doing or in review with no update for this long counts as stuck; blocked always does. */
+export const BOARD_STUCK_AFTER_MS = 48 * 3_600_000;
+const MAX_BOARD_ENTRIES = 100;
+
+/** The space's stuck tickets, read from the database with no model and no computer. */
+async function readBoard(
+  deps: Pick<RoutineWatchDeps, "prisma">,
+  routine: RoutineWatchTarget,
+  now: Date,
+): Promise<Reading> {
+  const staleBefore = new Date(now.getTime() - BOARD_STUCK_AFTER_MS);
+  const tickets = await deps.prisma.ticket.findMany({
+    where: {
+      spaceId: routine.spaceId,
+      OR: [
+        { status: "blocked" },
+        { status: { in: ["doing", "review"] }, updatedAt: { lt: staleBefore } },
+      ],
+    },
+    orderBy: { number: "asc" },
+    take: MAX_BOARD_ENTRIES,
+    select: { id: true, number: true, title: true, status: true },
+  });
+  const entries = Object.fromEntries(
+    tickets.map((ticket) => [
+      ticket.id,
+      `${ITEM_SIGNATURE}${stableStringify({ fields: [ticket.status], title: `#${ticket.number} ${ticket.title.slice(0, 100)}` })}`,
+    ]),
+  );
+  return {
+    fingerprint: sha256(
+      stableStringify(Object.fromEntries(tickets.map((ticket) => [ticket.id, ticket.status]))),
+    ),
+    entries,
+    detail: null,
+  };
+}
+
 async function readTool(
   deps: RoutineWatchDeps,
   routine: RoutineWatchTarget,
   watch: RoutineWatch,
+  now: Date,
 ): Promise<Reading> {
   const connector = deps.connector;
   if (!connector) throw new RoutineWatchError("No integrations are available to check.");
@@ -505,7 +567,8 @@ async function readTool(
   }
   // Discovery waits on every provider; the tool call gets its own full budget.
   ctx.signal = AbortSignal.timeout(CHECK_TIMEOUT_MS);
-  const call = { tool: toolName, args: watch.args ?? {}, executionId: ctx.operationId };
+  const args = watch.preset ? expandWatchArgs(watch.args ?? {}, now) : (watch.args ?? {});
+  const call = { tool: toolName, args, executionId: ctx.operationId };
   const tool = tools.find((candidate) => candidate.name === toolName);
   const resolved = tool
     ? { call: { ...call, route: tool.route }, tool }
@@ -542,11 +605,45 @@ async function readTool(
       failure = toolResultText(result.error ?? data);
   }
   if (failure) throw new RoutineWatchError(`${toolName} failed: ${clip(failure)}`);
+  if (watch.preset) return readPreset(deps, routine, watch, data, now);
   if (watch.track) return readItems(data, watch.track);
   // The fingerprint covers the whole result; only the note the bot reads is unwrapped.
   return {
     fingerprint: sha256(stableStringify(data ?? null)),
     detail: clip(toolResultText(data)),
+  };
+}
+
+async function readPreset(
+  deps: RoutineWatchDeps,
+  routine: RoutineWatchTarget,
+  watch: RoutineWatch,
+  data: unknown,
+  now: Date,
+): Promise<Reading> {
+  const json = resultJson(data);
+  const user = await deps.prisma.user.findUnique({
+    where: { id: routine.userId },
+    select: { timezone: true, email: true },
+  });
+  let preset: PresetReading;
+  if (watch.preset === "email") {
+    preset = readEmailPreset(json, {
+      userEmails: [...(watch.userEmails ?? []), ...(user?.email ? [user.email] : [])],
+    });
+  } else {
+    const zone = TimeZoneSchema.safeParse(user?.timezone);
+    preset = readCalendarPreset(json, {
+      now,
+      timeZone: zone.success ? zone.data : "UTC",
+      leadMinutes: watch.leadMinutes,
+    });
+  }
+  return {
+    fingerprint: sha256(stableStringify(preset.entries)),
+    entries: preset.entries,
+    changeNote: preset.changeNote,
+    detail: null,
   };
 }
 
@@ -666,7 +763,7 @@ export async function tickRoutineWatch(
       run: true,
       state: outcome.state,
       nextRunAt,
-      note: `${ROUTINE_WATCH_NOTE_START}${describeRoutineWatch(watch)}).\nWhat changed since the last check:\n${outcome.state.detail ?? "(no detail)"}`,
+      note: `${ROUTINE_WATCH_NOTE_START}${describeRoutineWatch(watch)}).\nWhat changed since the last check:\n${watch.preset ? fencePresetDetail(outcome.state.detail ?? "") : (outcome.state.detail ?? "(no detail)")}`,
     };
   }
   const claimed = await deps.prisma.routine.updateMany({
@@ -741,6 +838,23 @@ export async function postRoutineWatchMessage(
 export function assertWatchToolReadOnly(tool: string, readOnly: boolean | undefined): void {
   const refusal = watchToolRefusal({ toolName: tool, readOnly, rules: [] });
   if (refusal) throw new RoutineWatchError(refusal);
+}
+
+/**
+ * The read tool a preset should use when the agent did not name one: the first read-only tool
+ * of the connected integrations that lists events or inbox messages. Null when none is connected.
+ */
+export async function pickPresetTool(
+  deps: { connector?: ConnectorProvider; prisma?: PrismaClient },
+  target: { spaceId: string; userId: string; botId: string },
+  preset: "calendar" | "email",
+): Promise<string | null> {
+  if (!deps.connector) return null;
+  const routine = { ...target, id: "validate", watch: null, watchState: null };
+  const ctx = deps.prisma ? await toolContext(deps.prisma, routine) : context(routine);
+  const tools = await deps.connector.discoverTools(ctx);
+  const found = tools.find((tool) => tool.readOnly === true && presetToolName(preset, tool.name));
+  return found?.name ?? null;
 }
 
 /** Validate without executing a tool or provisioning a computer. */

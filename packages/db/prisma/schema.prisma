@@ -475,6 +475,8 @@ model Space {
   artifactTranscripts         ArtifactTranscript[]
   wikiChanges                 WikiChange[]
   wikiImports                 WikiImport[]
+  researchJobs                ResearchJob[]
+  researchSources             ResearchSource[]
   userMemories                UserMemory[]
   botMcpServers               BotMcpServer[]
   databaseConnections         DatabaseConnection[]
@@ -769,6 +771,8 @@ model Bot {
   archivedAt               DateTime?
   parentBotId              String?
   spawnKey                 String?
+  /// When the Chief's default watch routine was set up, so deleting it is not undone.
+  chiefWatchAt             DateTime?
   /// Short first messages shown as buttons while the chat is empty: ["Show today's bookings", ...].
   starters                 Json?
   memoryScope              String?
@@ -817,6 +821,7 @@ model Bot {
   /// What this bot does with facts about the person: "auto" saves them (with Undo), "ask" waits for Save, "read" only reads. Null is "ask".
   memoryMode               String?
   routines                 Routine[]
+  surfacedItems            SurfacedItem[]
   routineSteps             RoutineStep[]
   scratchpadItems          ScratchpadItem[]
   taughtSkills             TaughtSkill[]
@@ -2107,6 +2112,74 @@ model WikiImport {
   @@map("wiki_imports")
 }
 
+/// A background research job an agent started in a thread: it plans, searches, reads and takes
+/// notes inside a step and token budget, then writes a report whose numbers cite its sources.
+model ResearchJob {
+  id           String           @id @default(cuid())
+  spaceId      String
+  space        Space            @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId       String
+  botId        String
+  threadId     String
+  /// The card in the thread that shows the job.
+  messageId    String?
+  /// The tool call that started it, so a repeated call is one job.
+  operationKey String           @unique
+  question     String
+  scope        String?
+  /// "quick" or "deep": the budget the job gets.
+  depth        String           @default("quick")
+  /// Same question asked again finds the job to compare against.
+  queryKey     String
+  /// A recurring run reports only what changed and says nothing when nothing did.
+  watch        Boolean          @default(false)
+  /// "running", "finished", "failed" or "cancelled".
+  status       String           @default("running")
+  /// Why gathering stopped: "enough", "steps", "tokens" or "monthly_limit".
+  stopReason   String?
+  steps        Int              @default(0)
+  tokens       Int              @default(0)
+  maxSteps     Int
+  maxTokens    Int
+  /// Sub-questions still to ask and the notes taken so far.
+  state        Json             @default("{}")
+  report       String?
+  /// False when a watching job found nothing new against `previousId`.
+  changed      Boolean?
+  error        String?
+  previousId   String?
+  wakeDone     Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  finishedAt   DateTime?
+  sources      ResearchSource[]
+
+  @@index([spaceId, botId, queryKey, status])
+  @@index([spaceId, userId, id])
+  @@map("research_jobs")
+}
+
+/// A page a research job read. Its position is the number a citation in the report uses.
+model ResearchSource {
+  id          String      @id @default(cuid())
+  researchId  String
+  research    ResearchJob @relation(fields: [researchId], references: [id], onDelete: Cascade)
+  spaceId     String
+  space       Space       @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  position    Int
+  url         String
+  title       String
+  fetchedAt   DateTime    @default(now())
+  /// A short passage that supports what the notes took from the page.
+  excerpt     String
+  /// Of the text read, so a later job can tell a page changed without keeping it.
+  contentHash String
+
+  @@unique([researchId, url])
+  @@index([spaceId, researchId])
+  @@map("research_sources")
+}
+
 model ProviderQuota {
   id        String   @id @default(cuid())
   spaceId   String
@@ -2482,12 +2555,37 @@ model Ticket {
   completedAt     DateTime?
   /// Named data the people and agents keep on the ticket: a list of { name, value }.
   fields          Json?
+  /// What the agent says is still left when it stops short of the goal; keeps the ticket going.
+  remaining       String?
+  /// Follow-up runs started because the goal was not met; capped so a job cannot loop forever.
+  continuations   Int             @default(0)
+  /// The checklist and measurable target that say the ticket is done.
+  acceptanceCriteria String?
+  /// Times the creator reviewed the delivery; capped so a ticket cannot ping-pong.
+  reviewRounds    Int             @default(0)
   comments        TicketComment[]
+  /// Tickets that must be done before this one starts.
+  blockedBy       TicketDependency[] @relation("TicketBlocked")
+  /// Tickets waiting for this one.
+  blocks          TicketDependency[] @relation("TicketBlocker")
 
   @@unique([boardId, number])
   @@index([spaceId, status])
   @@index([boardId, status])
   @@map("tickets")
+}
+
+/// `ticketId` waits until `blockerId` is done.
+model TicketDependency {
+  ticketId  String
+  ticket    Ticket   @relation("TicketBlocked", fields: [ticketId], references: [id], onDelete: Cascade)
+  blockerId String
+  blocker   Ticket   @relation("TicketBlocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([ticketId, blockerId])
+  @@index([blockerId])
+  @@map("ticket_dependencies")
 }
 
 model TicketComment {
@@ -3637,4 +3735,25 @@ model ToolClassification {
   @@unique([spaceId, connection, toolName, descriptionHash, rubricVersion], map: "tool_classifications_key")
   @@index([spaceId, connection])
   @@map("tool_classifications")
+}
+
+/// What an agent already told a person or channel from a background run, so it speaks again only when the item materially changes.
+model SurfacedItem {
+  id          String   @id @default(cuid())
+  spaceId     String
+  botId       String
+  bot         Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
+  /// The thread the agent spoke in: a person's chat or a channel.
+  threadId    String
+  /// Stable name the agent gives the thing, such as "calendar:conflict:2026-11-23".
+  key         String
+  /// Changes when the item changes materially; the same value means nothing new to say.
+  fingerprint String?
+  summary     String
+  runId       String?
+  surfacedAt  DateTime @default(now())
+
+  @@unique([botId, threadId, key])
+  @@index([botId, threadId, surfacedAt])
+  @@map("surfaced_items")
 }

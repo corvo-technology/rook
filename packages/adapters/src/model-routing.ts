@@ -1,6 +1,7 @@
 import { ModelOutputError } from "@corvo/adapter-kit";
 import type { EscalationTrigger, ModelTier, RunTrigger } from "@corvo/contracts";
 import { MODEL_TIERS } from "@corvo/contracts";
+import { isAutonomousRunTrigger } from "@corvo/core";
 import { TurnGuardStopError } from "./run-guards.js";
 
 /** The tier after this one, or null when it is already the strongest. */
@@ -33,6 +34,7 @@ export type TierReason =
   | "heavy-agent"
   | "large-context"
   | "approval"
+  | "background"
   | "light-agent"
   | "ambiguous";
 
@@ -71,6 +73,12 @@ export function decideTier(signals: TurnSignals): TierDecision {
       ? { tier, clear, reason }
       : { tier: raised, clear: true, reason: "floor" };
   };
+  // Nobody is waiting on a scheduled, watching or inbound run, and most end silent. It starts on
+  // the fast tier whatever the agent's title says, and asks for more through request_stronger_model
+  // or the failure escalation when the analysis needs it.
+  if (isAutonomousRunTrigger(signals.trigger) && !signals.approvalGated) {
+    return decide("fast", true, "background");
+  }
   if (code) return decide("strong", true, "code");
   if (heavy) return decide("strong", true, "heavy-agent");
   if (signals.contextTokens >= LARGE_CONTEXT_TOKENS) return decide("strong", true, "large-context");

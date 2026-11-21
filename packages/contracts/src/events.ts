@@ -21,6 +21,7 @@ export const ProductEventType = z.enum([
   "thread.computer",
   "thread.subagent",
   "thread.cloud_agent",
+  "thread.research",
   "thread.call.ended",
   "run.started",
   "run.steering.claimed",
@@ -344,6 +345,13 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     branch: z.string().optional(),
     prUrl: z.string().optional(),
     latestRunId: z.string().optional(),
+  }),
+  z.object({
+    /** A background research job in the thread: the question and whether it is still going. */
+    kind: z.literal("research"),
+    researchId: z.string(),
+    question: z.string(),
+    status: z.enum(["running", "finished", "failed", "cancelled"]),
   }),
   z.object({
     kind: z.literal("skill_draft"),

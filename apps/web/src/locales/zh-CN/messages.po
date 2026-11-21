@@ -2041,6 +2041,7 @@ msgid "Canceled"
 msgstr "已取消"
 
 #: src/components/CloudAgentCard.tsx
+#: src/components/ResearchCard.tsx
 msgid "cancelled"
 msgstr "已取消"
 
@@ -4476,6 +4477,7 @@ msgid "Facts about you"
 msgstr "关于你的信息"
 
 #: src/components/CloudAgentCard.tsx
+#: src/components/ResearchCard.tsx
 msgid "failed"
 msgstr "失败"
 
@@ -4600,6 +4602,7 @@ msgid "Finish subscription sign-in, then test again."
 msgstr "请完成订阅登录，然后重新测试。"
 
 #: src/components/CloudAgentCard.tsx
+#: src/components/ResearchCard.tsx
 msgid "finished"
 msgstr "已完成"
 
@@ -8210,6 +8213,7 @@ msgid "Run time must be in the future."
 msgstr "运行时间必须是将来的时间。"
 
 #: src/components/CloudAgentCard.tsx
+#: src/components/ResearchCard.tsx
 msgid "running"
 msgstr "运行中"
 
@@ -9067,6 +9071,10 @@ msgstr "流式回复"
 #: src/pages/Usage.tsx
 msgid "Strong"
 msgstr "强力"
+
+#: src/pages/RoutineEditor.tsx
+msgid "Stuck tickets on the board"
+msgstr "看板上卡住的工单"
 
 #: src/components/CoachLayer.tsx
 msgid "Stuck? Ask the Chief."

@@ -63,6 +63,27 @@ function rowsFor(t: Tenant, tag: string): Array<[string, Record<string, unknown>
       },
     ],
     [
+      "botSecretGrant",
+      {
+        id: `rls-bot-secret-grant-${tag}-${t.botId}`,
+        secretId: `rls-bot-secret-${tag}-${t.botId}`,
+        botId: t.botId,
+        spaceId: t.spaceId,
+      },
+    ],
+    [
+      "botSecretUse",
+      {
+        id: `rls-bot-secret-use-${tag}-${t.botId}`,
+        spaceId: t.spaceId,
+        secretId: `rls-bot-secret-${tag}-${t.botId}`,
+        name: `n-${tag}`,
+        botId: t.botId,
+        destination: "command",
+        outcome: "ok",
+      },
+    ],
+    [
       "agentSecret",
       {
         spaceId: t.spaceId,
@@ -220,17 +241,23 @@ describePostgres("row-level security (PostgreSQL)", () => {
   const threadIds = () => tenants.map((t) => t.threadId);
   const owners = () =>
     Promise.all(
-      ["botSecret", "agentSecret", "taughtSkill", "agentSkill", "userVoiceCredential"].map(
-        async (table) => {
-          const scope = table === "userVoiceCredential" ? "userId" : "spaceId";
-          const ids = tenants.map((t) => t[scope]);
-          const rows = (await Reflect.get(db, table).findMany({
-            where: { [scope]: { in: ids } },
-            select: { [scope]: true },
-          })) as Array<Record<string, string>>;
-          return [table, rows.map((row) => row[scope]).sort()] as const;
-        },
-      ),
+      [
+        "botSecret",
+        "botSecretGrant",
+        "botSecretUse",
+        "agentSecret",
+        "taughtSkill",
+        "agentSkill",
+        "userVoiceCredential",
+      ].map(async (table) => {
+        const scope = table === "userVoiceCredential" ? "userId" : "spaceId";
+        const ids = tenants.map((t) => t[scope]);
+        const rows = (await Reflect.get(db, table).findMany({
+          where: { [scope]: { in: ids } },
+          select: { [scope]: true },
+        })) as Array<Record<string, string>>;
+        return [table, rows.map((row) => row[scope]).sort()] as const;
+      }),
     ).then(Object.fromEntries);
   const visible = () =>
     Promise.all([
@@ -759,6 +786,8 @@ describePostgres("row-level security (PostgreSQL)", () => {
   it("applies the same rules to secrets, skills and voice credentials", async () => {
     const none = {
       botSecret: [],
+      botSecretGrant: [],
+      botSecretUse: [],
       agentSecret: [],
       taughtSkill: [],
       agentSkill: [],
@@ -767,6 +796,8 @@ describePostgres("row-level security (PostgreSQL)", () => {
     expect(await owners()).toEqual(none);
     expect(await runAsTenant(a, owners)).toEqual({
       botSecret: [a.spaceId],
+      botSecretGrant: [a.spaceId],
+      botSecretUse: [a.spaceId],
       agentSecret: [a.spaceId],
       taughtSkill: [a.spaceId],
       agentSkill: [a.spaceId],

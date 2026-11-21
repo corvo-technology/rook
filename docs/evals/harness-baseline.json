@@ -1,0 +1,791 @@
+{
+  "version": 1,
+  "kind": "run-harness-eval",
+  "mode": "offline",
+  "fixtureVersion": "run-harness-v1",
+  "rubricVersion": "harness-prose-v1",
+  "tokenEstimator": "adapters/context-selection estimateTextTokens",
+  "cacheSimulation": "prefix-cache-v1",
+  "startedAt": "2026-11-21T00:13:36.408Z",
+  "codeRevision": "132312197219d230721ac3fb2a11f455dd41b7ba",
+  "subject": null,
+  "judgeCostUsd": null,
+  "subjectCostUsd": null,
+  "status": "complete",
+  "tasks": [
+    {
+      "id": "quick-question",
+      "tier": "fast",
+      "tiers": ["fast"],
+      "status": "pass",
+      "checks": [
+        {
+          "id": "run-finished",
+          "pass": true
+        },
+        {
+          "id": "no-tools",
+          "pass": true
+        },
+        {
+          "id": "answer",
+          "pass": true
+        }
+      ],
+      "prose": null,
+      "metrics": {
+        "inputTokens": 20,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 8139,
+        "outputTokens": 11,
+        "modelCalls": 1,
+        "toolCalls": 0,
+        "schemaTokensPerCall": 8011,
+        "schemaTokensFirstCall": 8011,
+        "wallMs": 2022,
+        "firstVisibleTextMs": 1914
+      },
+      "error": null
+    },
+    {
+      "id": "greeting",
+      "tier": "fast",
+      "tiers": ["fast"],
+      "status": "pass",
+      "checks": [
+        {
+          "id": "run-finished",
+          "pass": true
+        },
+        {
+          "id": "no-tools",
+          "pass": true
+        },
+        {
+          "id": "short-reply",
+          "pass": true
+        }
+      ],
+      "prose": {
+        "status": "skipped",
+        "reason": "Prose rubric not requested"
+      },
+      "metrics": {
+        "inputTokens": 14,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 8139,
+        "outputTokens": 11,
+        "modelCalls": 1,
+        "toolCalls": 0,
+        "schemaTokensPerCall": 8011,
+        "schemaTokensFirstCall": 8011,
+        "wallMs": 170,
+        "firstVisibleTextMs": 164
+      },
+      "error": null
+    },
+    {
+      "id": "web-lookup",
+      "tier": "main",
+      "tiers": ["main"],
+      "status": "pass",
+      "checks": [
+        {
+          "id": "run-finished",
+          "pass": true
+        },
+        {
+          "id": "searched-then-opened",
+          "pass": true
+        },
+        {
+          "id": "answer",
+          "pass": true
+        }
+      ],
+      "prose": {
+        "status": "skipped",
+        "reason": "Prose rubric not requested"
+      },
+      "metrics": {
+        "inputTokens": 130,
+        "cacheReadTokens": 16444,
+        "cacheWriteTokens": 8259,
+        "outputTokens": 58,
+        "modelCalls": 3,
+        "toolCalls": 2,
+        "schemaTokensPerCall": 8011,
+        "schemaTokensFirstCall": 8011,
+        "wallMs": 144,
+        "firstVisibleTextMs": 141
+      },
+      "error": null
+    },
+    {
+      "id": "multi-step-report",
+      "tier": "main",
+      "tiers": ["main"],
+      "status": "pass",
+      "checks": [
+        {
+          "id": "run-finished",
+          "pass": true
+        },
+        {
+          "id": "three-distinct-tools",
+          "pass": true
+        },
+        {
+          "id": "summary-written",
+          "pass": true
+        }
+      ],
+      "prose": null,
+      "metrics": {
+        "inputTokens": 159,
+        "cacheReadTokens": 24910,
+        "cacheWriteTokens": 8409,
+        "outputTokens": 97,
+        "modelCalls": 4,
+        "toolCalls": 4,
+        "schemaTokensPerCall": 8011,
+        "schemaTokensFirstCall": 8011,
+        "wallMs": 420,
+        "firstVisibleTextMs": 415
+      },
+      "error": null
+    },
+    {
+      "id": "long-batch-checkpoint",
+      "tier": "main",
+      "tiers": ["main"],
+      "status": "pass",
+      "checks": [
+        {
+          "id": "run-finished",
+          "pass": true
+        },
+        {
+          "id": "twelve-fetched",
+          "pass": true
+        },
+        {
+          "id": "three-checkpoints",
+          "pass": true
+        },
+        {
+          "id": "checkpoint-complete",
+          "pass": true
+        },
+        {
+          "id": "list-saved",
+          "pass": true
+        }
+      ],
+      "prose": null,
+      "metrics": {
+        "inputTokens": 356,
+        "cacheReadTokens": 63732,
+        "cacheWriteTokens": 9723,
+        "outputTokens": 558,
+        "modelCalls": 8,
+        "toolCalls": 16,
+        "schemaTokensPerCall": 8011,
+        "schemaTokensFirstCall": 8011,
+        "wallMs": 344,
+        "firstVisibleTextMs": 336
+      },
+      "error": null
+    },
+    {
+      "id": "routine-tick-silent",
+      "tier": "fast",
+      "tiers": ["fast"],
+      "status": "pass",
+      "checks": [
+        {
+          "id": "run-finished",
+          "pass": true
+        },
+        {
+          "id": "checked-the-source",
+          "pass": true
+        },
+        {
+          "id": "silent",
+          "pass": true
+        },
+        {
+          "id": "no-effects",
+          "pass": true
+        }
+      ],
+      "prose": null,
+      "metrics": {
+        "inputTokens": 1071,
+        "cacheReadTokens": 28018,
+        "cacheWriteTokens": 6924,
+        "outputTokens": 22,
+        "modelCalls": 5,
+        "toolCalls": 1,
+        "schemaTokensPerCall": 6732,
+        "schemaTokensFirstCall": 6732,
+        "wallMs": 235,
+        "firstVisibleTextMs": null
+      },
+      "error": null
+    },
+    {
+      "id": "routine-tick-change",
+      "tier": "fast",
+      "tiers": ["fast"],
+      "status": "pass",
+      "checks": [
+        {
+          "id": "run-finished",
+          "pass": true
+        },
+        {
+          "id": "reported-version",
+          "pass": true
+        },
+        {
+          "id": "remembered",
+          "pass": true
+        },
+        {
+          "id": "did-not-repeat-old",
+          "pass": true
+        }
+      ],
+      "prose": {
+        "status": "skipped",
+        "reason": "Prose rubric not requested"
+      },
+      "metrics": {
+        "inputTokens": 143,
+        "cacheReadTokens": 13967,
+        "cacheWriteTokens": 6990,
+        "outputTokens": 65,
+        "modelCalls": 3,
+        "toolCalls": 2,
+        "schemaTokensPerCall": 6732,
+        "schemaTokensFirstCall": 6732,
+        "wallMs": 187,
+        "firstVisibleTextMs": 158
+      },
+      "error": null
+    },
+    {
+      "id": "handoff-to-agent",
+      "tier": "main",
+      "tiers": ["main"],
+      "status": "pass",
+      "checks": [
+        {
+          "id": "run-finished",
+          "pass": true
+        },
+        {
+          "id": "found-then-used",
+          "pass": true
+        },
+        {
+          "id": "via-use-tool",
+          "pass": true
+        },
+        {
+          "id": "right-target",
+          "pass": true
+        }
+      ],
+      "prose": null,
+      "metrics": {
+        "inputTokens": 453,
+        "cacheReadTokens": 16782,
+        "cacheWriteTokens": 8303,
+        "outputTokens": 90,
+        "modelCalls": 3,
+        "toolCalls": 2,
+        "schemaTokensPerCall": 8011,
+        "schemaTokensFirstCall": 8011,
+        "wallMs": 141,
+        "firstVisibleTextMs": 120
+      },
+      "error": null
+    },
+    {
+      "id": "approval-gated-send",
+      "tier": "main",
+      "tiers": ["main"],
+      "status": "pass",
+      "checks": [
+        {
+          "id": "paused-for-approval",
+          "pass": true
+        },
+        {
+          "id": "one-pending-send",
+          "pass": true
+        },
+        {
+          "id": "nothing-sent",
+          "pass": true
+        },
+        {
+          "id": "one-model-call",
+          "pass": true
+        }
+      ],
+      "prose": null,
+      "metrics": {
+        "inputTokens": 25,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 8247,
+        "outputTokens": 42,
+        "modelCalls": 1,
+        "toolCalls": 1,
+        "schemaTokensPerCall": 8119,
+        "schemaTokensFirstCall": 8119,
+        "wallMs": 37,
+        "firstVisibleTextMs": 36
+      },
+      "error": null
+    },
+    {
+      "id": "email-triage",
+      "tier": "main",
+      "tiers": ["main"],
+      "status": "pass",
+      "checks": [
+        {
+          "id": "run-finished",
+          "pass": true
+        },
+        {
+          "id": "drafted-the-urgent-two",
+          "pass": true
+        },
+        {
+          "id": "sent-nothing",
+          "pass": true
+        },
+        {
+          "id": "summary-counts",
+          "pass": true
+        }
+      ],
+      "prose": null,
+      "metrics": {
+        "inputTokens": 341,
+        "cacheReadTokens": 17107,
+        "cacheWriteTokens": 8621,
+        "outputTokens": 159,
+        "modelCalls": 3,
+        "toolCalls": 3,
+        "schemaTokensPerCall": 8222,
+        "schemaTokensFirstCall": 8222,
+        "wallMs": 207,
+        "firstVisibleTextMs": 205
+      },
+      "error": null
+    },
+    {
+      "id": "calendar-conflict",
+      "tier": "main",
+      "tiers": ["main"],
+      "status": "pass",
+      "checks": [
+        {
+          "id": "checked-calendar",
+          "pass": true
+        },
+        {
+          "id": "did-not-book",
+          "pass": true
+        },
+        {
+          "id": "asked-once-with-options",
+          "pass": true
+        }
+      ],
+      "prose": null,
+      "metrics": {
+        "inputTokens": 122,
+        "cacheReadTokens": 8392,
+        "cacheWriteTokens": 8456,
+        "outputTokens": 123,
+        "modelCalls": 2,
+        "toolCalls": 2,
+        "schemaTokensPerCall": 8228,
+        "schemaTokensFirstCall": 8228,
+        "wallMs": 70,
+        "firstVisibleTextMs": 68
+      },
+      "error": null
+    },
+    {
+      "id": "memory-recall",
+      "tier": "fast",
+      "tiers": ["fast"],
+      "status": "pass",
+      "checks": [
+        {
+          "id": "run-finished",
+          "pass": true
+        },
+        {
+          "id": "recalled",
+          "pass": true
+        },
+        {
+          "id": "answer",
+          "pass": true
+        }
+      ],
+      "prose": null,
+      "metrics": {
+        "inputTokens": 57,
+        "cacheReadTokens": 8157,
+        "cacheWriteTokens": 8196,
+        "outputTokens": 30,
+        "modelCalls": 2,
+        "toolCalls": 1,
+        "schemaTokensPerCall": 8011,
+        "schemaTokensFirstCall": 8011,
+        "wallMs": 66,
+        "firstVisibleTextMs": 64
+      },
+      "error": null
+    },
+    {
+      "id": "wiki-lookup",
+      "tier": "main",
+      "tiers": ["main"],
+      "status": "pass",
+      "checks": [
+        {
+          "id": "run-finished",
+          "pass": true
+        },
+        {
+          "id": "searched-then-read",
+          "pass": true
+        },
+        {
+          "id": "answer",
+          "pass": true
+        }
+      ],
+      "prose": null,
+      "metrics": {
+        "inputTokens": 103,
+        "cacheReadTokens": 16399,
+        "cacheWriteTokens": 8250,
+        "outputTokens": 53,
+        "modelCalls": 3,
+        "toolCalls": 2,
+        "schemaTokensPerCall": 8011,
+        "schemaTokensFirstCall": 8011,
+        "wallMs": 266,
+        "firstVisibleTextMs": 263
+      },
+      "error": null
+    },
+    {
+      "id": "ambiguous-request",
+      "tier": "fast",
+      "tiers": ["fast"],
+      "status": "pass",
+      "checks": [
+        {
+          "id": "run-finished",
+          "pass": true
+        },
+        {
+          "id": "no-tools",
+          "pass": true
+        },
+        {
+          "id": "one-question",
+          "pass": true
+        },
+        {
+          "id": "nothing-sent",
+          "pass": true
+        }
+      ],
+      "prose": {
+        "status": "skipped",
+        "reason": "Prose rubric not requested"
+      },
+      "metrics": {
+        "inputTokens": 56,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 8247,
+        "outputTokens": 21,
+        "modelCalls": 1,
+        "toolCalls": 0,
+        "schemaTokensPerCall": 8119,
+        "schemaTokensFirstCall": 8119,
+        "wallMs": 57,
+        "firstVisibleTextMs": 55
+      },
+      "error": null
+    },
+    {
+      "id": "needs-stronger-model",
+      "tier": "main",
+      "tiers": ["main", "strong"],
+      "status": "pass",
+      "checks": [
+        {
+          "id": "moved-up-once",
+          "pass": true
+        },
+        {
+          "id": "asked-for-stronger-model",
+          "pass": true
+        },
+        {
+          "id": "ordered-plan",
+          "pass": true
+        }
+      ],
+      "prose": null,
+      "metrics": {
+        "inputTokens": 102,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 16135,
+        "outputTokens": 180,
+        "modelCalls": 2,
+        "toolCalls": 1,
+        "schemaTokensPerCall": 7940,
+        "schemaTokensFirstCall": 8011,
+        "wallMs": 276,
+        "firstVisibleTextMs": 40
+      },
+      "error": null
+    },
+    {
+      "id": "long-history-followup",
+      "tier": "fast",
+      "tiers": ["fast"],
+      "status": "pass",
+      "checks": [
+        {
+          "id": "run-finished",
+          "pass": true
+        },
+        {
+          "id": "no-tools",
+          "pass": true
+        },
+        {
+          "id": "answer",
+          "pass": true
+        }
+      ],
+      "prose": null,
+      "metrics": {
+        "inputTokens": 227,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 8139,
+        "outputTokens": 16,
+        "modelCalls": 1,
+        "toolCalls": 0,
+        "schemaTokensPerCall": 8011,
+        "schemaTokensFirstCall": 8011,
+        "wallMs": 104,
+        "firstVisibleTextMs": 102
+      },
+      "error": null
+    },
+    {
+      "id": "large-tool-result",
+      "tier": "main",
+      "tiers": ["main"],
+      "status": "pass",
+      "checks": [
+        {
+          "id": "run-finished",
+          "pass": true
+        },
+        {
+          "id": "fetched-once",
+          "pass": true
+        },
+        {
+          "id": "answer",
+          "pass": true
+        }
+      ],
+      "prose": null,
+      "metrics": {
+        "inputTokens": 2284,
+        "cacheReadTokens": 8172,
+        "cacheWriteTokens": 8198,
+        "outputTokens": 28,
+        "modelCalls": 2,
+        "toolCalls": 1,
+        "schemaTokensPerCall": 8011,
+        "schemaTokensFirstCall": 8011,
+        "wallMs": 122,
+        "firstVisibleTextMs": 120
+      },
+      "error": null
+    },
+    {
+      "id": "remember-preference",
+      "tier": "fast",
+      "tiers": ["fast"],
+      "status": "pass",
+      "checks": [
+        {
+          "id": "run-finished",
+          "pass": true
+        },
+        {
+          "id": "saved-fact",
+          "pass": true
+        }
+      ],
+      "prose": null,
+      "metrics": {
+        "inputTokens": 47,
+        "cacheReadTokens": 8163,
+        "cacheWriteTokens": 8204,
+        "outputTokens": 35,
+        "modelCalls": 2,
+        "toolCalls": 1,
+        "schemaTokensPerCall": 8011,
+        "schemaTokensFirstCall": 8011,
+        "wallMs": 168,
+        "firstVisibleTextMs": 146
+      },
+      "error": null
+    },
+    {
+      "id": "schedule-routine",
+      "tier": "main",
+      "tiers": ["main"],
+      "status": "pass",
+      "checks": [
+        {
+          "id": "run-finished",
+          "pass": true
+        },
+        {
+          "id": "one-schedule",
+          "pass": true
+        },
+        {
+          "id": "weekday-cron",
+          "pass": true
+        }
+      ],
+      "prose": null,
+      "metrics": {
+        "inputTokens": 57,
+        "cacheReadTokens": 8165,
+        "cacheWriteTokens": 8234,
+        "outputTokens": 61,
+        "modelCalls": 2,
+        "toolCalls": 1,
+        "schemaTokensPerCall": 8011,
+        "schemaTokensFirstCall": 8011,
+        "wallMs": 270,
+        "firstVisibleTextMs": 256
+      },
+      "error": null
+    },
+    {
+      "id": "tool-error-recovery",
+      "tier": "main",
+      "tiers": ["main"],
+      "status": "pass",
+      "checks": [
+        {
+          "id": "run-finished",
+          "pass": true
+        },
+        {
+          "id": "failed-once-then-worked",
+          "pass": true
+        },
+        {
+          "id": "within-four-calls",
+          "pass": true
+        },
+        {
+          "id": "answer",
+          "pass": true
+        }
+      ],
+      "prose": null,
+      "metrics": {
+        "inputTokens": 162,
+        "cacheReadTokens": 24814,
+        "cacheWriteTokens": 8318,
+        "outputTokens": 77,
+        "modelCalls": 4,
+        "toolCalls": 3,
+        "schemaTokensPerCall": 8011,
+        "schemaTokensFirstCall": 8011,
+        "wallMs": 305,
+        "firstVisibleTextMs": 249
+      },
+      "error": null
+    },
+    {
+      "id": "database-question",
+      "tier": "main",
+      "tiers": ["main"],
+      "status": "pass",
+      "checks": [
+        {
+          "id": "run-finished",
+          "pass": true
+        },
+        {
+          "id": "read-only-query",
+          "pass": true
+        },
+        {
+          "id": "answer",
+          "pass": true
+        }
+      ],
+      "prose": null,
+      "metrics": {
+        "inputTokens": 100,
+        "cacheReadTokens": 17106,
+        "cacheWriteTokens": 8605,
+        "outputTokens": 51,
+        "modelCalls": 3,
+        "toolCalls": 2,
+        "schemaTokensPerCall": 8357,
+        "schemaTokensFirstCall": 8357,
+        "wallMs": 265,
+        "firstVisibleTextMs": 262
+      },
+      "error": null
+    }
+  ],
+  "totals": {
+    "tasks": 21,
+    "pass": 21,
+    "fail": 0,
+    "unqualified": 0,
+    "inputTokens": 6029,
+    "cacheReadTokens": 280328,
+    "cacheWriteTokens": 180736,
+    "outputTokens": 1788,
+    "modelCalls": 56,
+    "toolCalls": 45,
+    "wallMs": 5876,
+    "schemaTokensPerCall": 7867,
+    "schemaTokensFirstCall": 7936,
+    "firstVisibleTextMs": null
+  }
+}

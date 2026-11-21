@@ -270,7 +270,7 @@ dbTests("durable model credit audit", () => {
     ]);
     expect(events.reduce((sum, e) => sum + e.amountMicros, 0n)).toBe(3_000_000n);
   });
-  it("settles a hold with unavailable provider evidence at an estimate after bounded retries", async () => {
+  it("settles an unpriced hold with unavailable provider evidence at zero, flagged for review, after bounded retries", async () => {
     const f = await fixture();
     let now = Date.now() + 10 * 60_000;
     const reconcile = createModelCreditReconciler({ prisma, now: () => new Date(now) });
@@ -279,9 +279,10 @@ dbTests("durable model credit audit", () => {
       now += 60 * 60_000;
     }
     expect(await prisma.modelCreditEntry.findUnique({ where: { callId: f.callId } })).toMatchObject(
-      { pending: false, reconciliationState: "complete" },
+      { pending: false, reconciliationState: "needs_review", amountMicros: 0n },
     );
-    expect((await creditAccount(prisma, f.organizationId)).balanceMicros).toBe(8_000_000n);
+    // The whole reservation is released: nothing is charged without a price.
+    expect((await creditAccount(prisma, f.organizationId)).balanceMicros).toBe(10_000_000n);
   });
   it("retains usage and immutable journal history after organization deletion", async () => {
     const f = await fixture();

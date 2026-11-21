@@ -22,6 +22,7 @@ import {
   withoutUnreadableImages,
 } from "./image-integrity.js";
 import { estimateModelContextTokens } from "./model-context.js";
+import type { ModelCooldowns } from "./model-cooldown.js";
 import { IMAGE_RETURNING_COMPUTER_TOOLS } from "./model-vision.js";
 import { affordableOpenRouterOutput } from "./openrouter-output-budget.js";
 import { estimatePiImageTokens } from "./pi-image-context.js";
@@ -29,7 +30,7 @@ import { OPENAI_COMPATIBLE_PROVIDER_ID } from "./pi-openai-compatible-provider.j
 import { assistantText, messageHasToolCall, sanitizeProviderError } from "./pi-runtime-errors.js";
 import {
   effectiveOutputReserve,
-  MODEL_STREAM_TIMEOUT_MS,
+  modelStreamTimeouts,
   resolveCompletionMaxTokens,
 } from "./pi-runtime-limits.js";
 import type { RuntimeModelTarget } from "./pi-runtime-models.js";
@@ -73,6 +74,10 @@ export interface FallbackStreamState {
   cutReplies?: WeakMap<AssistantMessage["content"], CutReplyReason>;
   /** The next call continues a cut reply, so a dropped connection there is not continued again. */
   continuingCutReply?: boolean;
+  /** Models that failed lately; failover passes over one that is still cooling down. */
+  cooldowns?: ModelCooldowns;
+  /** Retry-After of the latest provider response, read and cleared when that call fails. */
+  retryAfterMs?: number;
   onSwitch(target: RuntimeModelTarget): Promise<void>;
   onContextLimit(contextWindow: number): void;
   isProviderFailure(message: AssistantMessage): boolean;
@@ -387,6 +392,10 @@ export function fallbackAwareModelStream(
           status: "skipped",
           reason,
         });
+      if (state.cooldowns?.remainingMs(key)) {
+        skip("The backup model is cooling down after a recent failure.");
+        continue;
+      }
       try {
         const config = state.request.resolveFallbackModel
           ? await state.request.resolveFallbackModel(
@@ -449,7 +458,8 @@ export function fallbackAwareModelStream(
     // Bound same-model retries. Explicit backups retain their per-model header
     // timeout: a post-header idle watchdog can already exceed that timeout.
     let startedAt = Date.now();
-    const timeoutMs = options?.timeoutMs ?? MODEL_STREAM_TIMEOUT_MS;
+    const timeoutMs =
+      options?.timeoutMs ?? modelStreamTimeouts(state.request.interactive).headersMs;
     let firstRetryableError: Extract<AssistantMessageEvent, { type: "error" }> | undefined;
     // Set once this call has been repeated after spending its output budget on nothing visible.
     let lengthRecovered = false;
@@ -611,6 +621,9 @@ export function fallbackAwareModelStream(
               state.isProviderFailure(event.error) &&
               isRetryableProviderUnavailable(event.error)
             ) {
+              const retryAfterMs = state.retryAfterMs;
+              state.retryAfterMs = undefined;
+              state.cooldowns?.start(modelTargetKey(target.config), retryAfterMs);
               state.primaryFailure ??= sanitizeProviderError(
                 target.config.provider,
                 event.error.errorMessage ?? "Model request failed.",
@@ -633,11 +646,14 @@ export function fallbackAwareModelStream(
               if (isTransientModelError(event.error)) {
                 firstRetryableError ??= event;
                 const idle = event.error.errorMessage === MODEL_STREAM_IDLE_TIMEOUT_MESSAGE;
-                const delay = idle
+                const backoff = idle
                   ? recoveredIdle
                     ? undefined
                     : MODEL_PROVIDER_RETRY_DELAYS_MS[0]
                   : MODEL_PROVIDER_RETRY_DELAYS_MS[retries];
+                // Come back no sooner than the provider asked.
+                const delay =
+                  backoff === undefined ? undefined : Math.max(backoff, retryAfterMs ?? 0);
                 if (idle && delay !== undefined) {
                   // The post-header idle bound can outlast the header retry window.
                   // Renew it once for this empty call, retaining completed tool results.
@@ -704,6 +720,7 @@ export function fallbackAwareModelStream(
             // A recovered call must not replace a later failure with its old error.
             state.primaryFailure = undefined;
             state.backupOutcomes.delete(targetKey);
+            state.cooldowns?.clear(modelTargetKey(target.config));
             if (
               event.message.stopReason === "length" &&
               !event.message.errorMessage &&

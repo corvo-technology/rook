@@ -723,6 +723,9 @@ export async function completeRun(ctx: RunContext) {
   }
   const { screenRelease } = ctx.state.computerUse;
   if (screenRelease) screenRelease.keepWarm = true;
+  // The agent is done with the computer: free it before the notification and
+  // follow-up tail so the next queued run is not held up by bookkeeping.
+  await ctx.releaseComputer();
   if (completed.continuationRunId) {
     await deps.jobs
       .enqueue(runContinueJob(completed.continuationRunId))

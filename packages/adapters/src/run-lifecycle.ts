@@ -202,6 +202,43 @@ export async function renewRunLease(
   return renewed.count === 1;
 }
 
+/** Pauses between heartbeat retries: a database blip of about a second must not cost the run. */
+export const HEARTBEAT_RETRY_BACKOFF_MS: readonly number[] = [200, 500, 1_000];
+
+/**
+ * Renews the leases, retrying a thrown error (connection blip) with short backoff.
+ * `held`: renewed. `lost`: the database answered and another owner has the lease, a real
+ * invalidation. `unreachable`: every try threw, so the lease state is unknown.
+ */
+export async function renewLeasesTolerantly(
+  renew: () => Promise<boolean>,
+  sleep: (ms: number) => Promise<void> = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+): Promise<"held" | "lost" | "unreachable"> {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return (await renew()) ? "held" : "lost";
+    } catch {
+      const pause = HEARTBEAT_RETRY_BACKOFF_MS[attempt];
+      if (pause === undefined) return "unreachable";
+      await sleep(pause);
+    }
+  }
+}
+
+/**
+ * Abort at once on a real invalidation. When the database cannot be reached, keep going
+ * until one more missed beat would let the lease expire under the run.
+ */
+export function heartbeatShouldAbort(
+  outcome: "held" | "lost" | "unreachable",
+  lastRenewedAt: number,
+  now = Date.now(),
+): boolean {
+  if (outcome === "held") return false;
+  if (outcome === "lost") return true;
+  return now - lastRenewedAt >= RUN_LEASE_TTL_MS - RUN_LEASE_HEARTBEAT_MS;
+}
+
 /** Consecutive setup failures, including this one, after which a run fails instead of retrying. */
 export const RUN_SETUP_FAILURE_LIMIT = 8;
 

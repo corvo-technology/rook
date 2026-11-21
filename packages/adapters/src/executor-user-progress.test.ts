@@ -15,9 +15,16 @@ import { createRunExecutor } from "./executor.js";
 import { createJobReconciler } from "./job-reconciler.js";
 import { userProgressClientNonce } from "./user-progress.js";
 
+const computerLease = vi.hoisted(() => ({
+  held: null as object | null,
+  release: vi.fn(async () => undefined),
+}));
+
 vi.mock("./computer-lifecycle.js", async (importOriginal) => ({
   ...(await importOriginal<typeof ComputerLifecycleModule>()),
-  acquireComputerExecutionLease: async () => null,
+  acquireComputerExecutionLease: async () => computerLease.held,
+  releaseComputerExecutionLease: computerLease.release,
+  renewComputerExecutionLease: async () => true,
   provisionComputer: async () => ({ id: "computer-1", kind: "desktop" }),
 }));
 
@@ -887,5 +894,21 @@ describe("instant acknowledgement", () => {
       runtimeEvents: [activity, { type: "done", text: "" }],
     });
     expect(append.mock.calls.map(([event]) => event.type)).not.toContain("thread.progress");
+  });
+});
+
+describe("computer lease release", () => {
+  it("frees the computer once, before the completion tail runs", async () => {
+    computerLease.held = { computerId: "computer-1", botId: "bot-1", runId: "run-1", fence: 1 };
+    computerLease.release.mockClear();
+    try {
+      const { prisma } = await runTurn("Done.", false);
+      expect(computerLease.release).toHaveBeenCalledOnce();
+      const released = computerLease.release.mock.invocationCallOrder[0]!;
+      const tailReads = prisma.thread.findUniqueOrThrow.mock.invocationCallOrder;
+      expect(tailReads.at(-1)!).toBeGreaterThan(released);
+    } finally {
+      computerLease.held = null;
+    }
   });
 });

@@ -10,6 +10,21 @@ export const MODEL_CONNECT_TIMEOUT_MS = 30_000;
  * and advance the configured fallback chain.
  */
 export const MODEL_STREAM_IDLE_TIMEOUT_MS = 180_000;
+/**
+ * A person is waiting on an interactive run: give up on a silent model sooner so the backup
+ * or a retry starts while they still watch. Background runs keep the patient bounds above.
+ */
+export const INTERACTIVE_MODEL_STREAM_TIMEOUT_MS = 45_000;
+export const INTERACTIVE_MODEL_STREAM_IDLE_TIMEOUT_MS = 90_000;
+
+export function modelStreamTimeouts(interactive?: boolean): { headersMs: number; idleMs: number } {
+  return interactive
+    ? {
+        headersMs: INTERACTIVE_MODEL_STREAM_TIMEOUT_MS,
+        idleMs: INTERACTIVE_MODEL_STREAM_IDLE_TIMEOUT_MS,
+      }
+    : { headersMs: MODEL_STREAM_TIMEOUT_MS, idleMs: MODEL_STREAM_IDLE_TIMEOUT_MS };
+}
 export const DEFAULT_MODEL_STREAM_MAX_RETRIES = 1;
 
 /** More retries extend the worst-case turn; the executor heartbeat renews its leases. */

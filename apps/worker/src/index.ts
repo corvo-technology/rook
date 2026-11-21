@@ -123,12 +123,12 @@ const logger = createRootLogger(SERVICE_NAMES.worker);
 async function main() {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) throw new Error("DATABASE_URL is required");
-  const poolMax = parsePositiveInteger(process.env.DB_POOL_MAX, 8);
-  // Three queue listeners and reconciliation leadership hold connections. Leave
+  const poolMax = parsePositiveInteger(process.env.DB_POOL_MAX, 10);
+  // Four queue listeners and reconciliation leadership hold connections. Leave
   // room for job queries and transactions instead of starting a stalled worker.
-  if (process.env.WAKEUP_DRIVER !== "memory" && poolMax < 6)
-    throw new Error("DB_POOL_MAX must be at least 6 for the Graphile worker");
-  // Prisma, queue publishing, the three queue listeners and reconciliation
+  if (process.env.WAKEUP_DRIVER !== "memory" && poolMax < 7)
+    throw new Error("DB_POOL_MAX must be at least 7 for the Graphile worker");
+  // Prisma, queue publishing, the four queue listeners and reconciliation
   // leadership share one bounded pool rather than opening a pool per component.
   // A larger max competes for Postgres max_connections (53300).
   const created = createDb(databaseUrl, {

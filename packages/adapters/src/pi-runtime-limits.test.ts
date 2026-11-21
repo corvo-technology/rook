@@ -5,7 +5,10 @@ import {
   clipToolResultContent,
   clipToolResultText,
   effectiveOutputReserve,
+  MODEL_STREAM_IDLE_TIMEOUT_MS,
+  MODEL_STREAM_TIMEOUT_MS,
   modelStreamMaxRetries,
+  modelStreamTimeouts,
   REASONING_MODEL_MAX_TOKENS,
   resolveCompletionMaxTokens,
   TOOL_RESULT_TEXT_LIMIT,
@@ -177,5 +180,21 @@ describe("clipToolResultContent", () => {
       .filter((part) => part.type === "text")
       .reduce((sum, part) => sum + part.text.replace(/…$/, "").length, 0);
     expect(textChars).toBe(TOOL_RESULT_TEXT_LIMIT);
+  });
+});
+
+describe("modelStreamTimeouts", () => {
+  it("keeps the patient bounds for background runs", () => {
+    expect(modelStreamTimeouts(false)).toEqual({
+      headersMs: MODEL_STREAM_TIMEOUT_MS,
+      idleMs: MODEL_STREAM_IDLE_TIMEOUT_MS,
+    });
+    expect(modelStreamTimeouts()).toEqual(modelStreamTimeouts(false));
+  });
+
+  it("gives up sooner on a silent model when a person is waiting", () => {
+    const interactive = modelStreamTimeouts(true);
+    expect(interactive.headersMs).toBeLessThan(MODEL_STREAM_TIMEOUT_MS);
+    expect(interactive.idleMs).toBeLessThan(MODEL_STREAM_IDLE_TIMEOUT_MS);
   });
 });

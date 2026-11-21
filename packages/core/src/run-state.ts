@@ -43,6 +43,23 @@ const NON_CONVERSATIONAL_RUN_TRIGGERS = new Set([
 export const BACKGROUND_RUN_TRIGGERS = ["tickets"] as const;
 const BACKGROUND_RUN_TRIGGER_SET = new Set<string>(BACKGROUND_RUN_TRIGGERS);
 
+/** Runs a person is waiting on; they get tighter model timeouts and the interactive job lane. */
+export const INTERACTIVE_RUN_TRIGGERS = [
+  "user",
+  "follow_up",
+  "reaction",
+  "call_end",
+  "messaging",
+  "created",
+  "skill",
+  "resume",
+] as const;
+const INTERACTIVE_RUN_TRIGGER_SET = new Set<string>(INTERACTIVE_RUN_TRIGGERS);
+
+export function isInteractiveRunTrigger(trigger: string | null | undefined): boolean {
+  return INTERACTIVE_RUN_TRIGGER_SET.has(trigger ?? "");
+}
+
 export function isBackgroundRunTrigger(trigger: string | null | undefined): boolean {
   return BACKGROUND_RUN_TRIGGER_SET.has(trigger ?? "");
 }

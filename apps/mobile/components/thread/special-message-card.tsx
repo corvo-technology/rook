@@ -29,7 +29,16 @@ const openHelpers = new Set<string>();
 
 export type SpecialMessageBlock = Extract<
   MessageBlock,
-  { kind: "subagent" | "child_bot" | "cloud_agent" | "research" | "plan" | "wiki_change" | "memory_fact" }
+  {
+    kind:
+      | "subagent"
+      | "child_bot"
+      | "cloud_agent"
+      | "research"
+      | "plan"
+      | "wiki_change"
+      | "memory_fact";
+  }
 >;
 
 export function isSpecialMessageBlock(block: MessageBlock): block is SpecialMessageBlock {

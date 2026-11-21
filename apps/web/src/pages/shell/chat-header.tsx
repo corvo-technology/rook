@@ -80,7 +80,7 @@ export function ChatHeader({
     );
   }
   return (
-    <div className="app-drag flex shrink-0 items-center gap-3 border-b border-border bg-background px-3 py-1.5 md:px-[22px]">
+    <div className="app-drag flex shrink-0 items-center gap-2 border-b border-border bg-background px-3 py-1.5 md:gap-3 md:px-[22px]">
       <Button
         variant="ghost"
         size="icon"
@@ -94,7 +94,7 @@ export function ChatHeader({
         type="button"
         data-testid="bot-settings-trigger"
         onClick={onOpenChatSettings}
-        className="app-no-drag flex min-w-0 items-center gap-2.5 rounded-md text-start outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="app-no-drag flex min-w-0 flex-1 items-center gap-2.5 rounded-md text-start md:flex-none outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         {active ? (
           <BotAvatar
@@ -120,7 +120,7 @@ export function ChatHeader({
           ) : null}
         </span>
       </button>
-      <div className="app-no-drag ms-auto flex min-w-0 shrink-0 items-center gap-1 [&_button]:shrink-0">
+      <div className="app-no-drag flex min-w-0 shrink-0 items-center gap-1 md:ms-auto [&_button]:shrink-0">
         {active ? <ContextMeter botId={active.id} running={running} /> : null}
         {active ? (
           <ChatModelSwitcher bot={active} onChange={(patch) => onChangeModel(active, patch)} />

@@ -55,6 +55,17 @@ describe("request_stronger_model", () => {
   });
 });
 
+describe("note_surfaced", () => {
+  it("is offered to background runs only", () => {
+    for (const trigger of ["routine", "webhook", "cloud_agent"]) {
+      expect(names({ trigger })).toContain("note_surfaced");
+    }
+    for (const trigger of ["user", "messaging", "reaction"]) {
+      expect(names({ trigger })).not.toContain("note_surfaced");
+    }
+  });
+});
+
 describe("the wiki tools", () => {
   const wiki = ["wiki_index", "wiki_search", "wiki_read"];
 

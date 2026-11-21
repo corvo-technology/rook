@@ -13,6 +13,7 @@ import {
   containsSecret,
   displayName,
   humanizeToolName,
+  isAutonomousRunTrigger,
   isBackgroundRunTrigger,
   redactSecrets,
   stripReplyMarkers,
@@ -20,7 +21,7 @@ import {
   usageTokens,
   userRunError,
 } from "@corvo/core";
-import { recordUsage } from "@corvo/db";
+import { recordSurfacedItem, recordUsage, runSurfacedItems } from "@corvo/db";
 import { getLogger } from "@corvo/logging";
 import { sanitizedError } from "@corvo/logging/monitoring";
 import { isToolPauseResult } from "./approval-effect.js";
@@ -477,7 +478,7 @@ async function stopStuckToolLoop(ctx: RunContext, toolName: string) {
     blocks: isBackgroundRunTrigger(run.trigger) ? [] : [{ kind: "text", text: stuckText }],
   });
   if (!stopped) return;
-  await endTicketRun(deps, run, { kind: "stopped", error: stuckText });
+  await endTicketRun(deps, run, { kind: "stopped", error: stuckText, cut: true });
   ctx.stopHeartbeatAfterCompletion();
   if (run.trigger === "routine" && run.routineId) {
     await clearRoutineBackoff(deps, run.routineId);
@@ -695,7 +696,16 @@ export async function completeRun(ctx: RunContext) {
     ),
   });
   if (!completed) return;
-  await endTicketRun(deps, run, { kind: "finished" });
+  // Whatever a background run said is on the ledger, even when the agent declared no items.
+  if (isAutonomousRunTrigger(run.trigger) && !isBackgroundRunTrigger(run.trigger) && text.trim()) {
+    await noteBackgroundPost(deps.prisma, run, bot.id, thread.id, text).catch((error) =>
+      getLogger().error("surfaced item", error),
+    );
+  }
+  await endTicketRun(deps, run, {
+    kind: "finished",
+    cut: ctx.state.guards.calls.refusedCalls > 0,
+  });
   ctx.stopHeartbeatAfterCompletion();
   if (run.trigger === "routine" && run.routineId) {
     await clearRoutineBackoff(deps, run.routineId);
@@ -888,7 +898,11 @@ export async function failRun(
     ...(partialReply.length > 0 ? { partialReply } : {}),
   });
   if (!failed) return;
-  await endTicketRun(deps, run, { kind: "stopped", error: message });
+  await endTicketRun(deps, run, {
+    kind: "stopped",
+    error: message,
+    cut: error instanceof TurnGuardStopError,
+  });
   if (
     error instanceof TransientModelError ||
     error instanceof ModelAccountError ||
@@ -952,4 +966,23 @@ export async function failRun(
     });
   }
   await closeHandoffGroup(deps, run);
+}
+
+/** A background run's post is put on the ledger under its run unless the agent already declared items. */
+export async function noteBackgroundPost(
+  prisma: Parameters<typeof recordSurfacedItem>[0] & Parameters<typeof runSurfacedItems>[0],
+  run: { id: string; spaceId: string },
+  botId: string,
+  threadId: string,
+  text: string,
+): Promise<void> {
+  if ((await runSurfacedItems(prisma, run.id)) > 0) return;
+  await recordSurfacedItem(prisma, {
+    spaceId: run.spaceId,
+    botId,
+    threadId,
+    key: `run:${run.id}`,
+    summary: text,
+    runId: run.id,
+  });
 }

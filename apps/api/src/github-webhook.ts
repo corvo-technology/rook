@@ -70,6 +70,38 @@ const GITHUB_ACTIONS = new Set([
   "unpublished",
 ]);
 
+/** Outcome words GitHub defines; free text never passes through. */
+const OUTCOMES = new Set([
+  "success",
+  "failure",
+  "error",
+  "cancelled",
+  "timed_out",
+  "action_required",
+  "startup_failure",
+  "neutral",
+  "skipped",
+  "stale",
+  "inactive",
+  "pending",
+  "queued",
+  "in_progress",
+]);
+const FAILED_OUTCOMES = new Set(["failure", "error", "timed_out", "startup_failure"]);
+
+/** A failed deployment, workflow run or check run: the events worth waking an agent for unasked. */
+export function isGithubFailureEvent(event: string, payload: Record<string, unknown>): boolean {
+  const failed = (value: unknown) => typeof value === "string" && FAILED_OUTCOMES.has(value);
+  if (event === "deployment_status") return failed(record(payload.deployment_status)?.state);
+  if (payload.action !== "completed") return false;
+  if (event === "workflow_run") return failed(record(payload.workflow_run)?.conclusion);
+  if (event === "check_run") return failed(record(payload.check_run)?.conclusion);
+  return false;
+}
+
+const FAILURE_WAKE_GUIDANCE =
+  "A build or deploy failed. Look into what broke with your own tools; the event carries only metadata. If you have nothing useful to add or someone already has it, reply with exactly NO_RESPONSE.";
+
 function record(value: unknown): Record<string, unknown> | undefined {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -103,6 +135,9 @@ function githubDeliveryMetadata(
   const comment = record(payload.comment);
   const workflowRun = record(payload.workflow_run);
   const release = record(payload.release);
+  const deployment = record(payload.deployment);
+  const deploymentStatus = record(payload.deployment_status);
+  const checkRun = record(payload.check_run);
 
   const fields: Array<[string, unknown]> = [
     ["repositoryId", repository?.id],
@@ -115,6 +150,9 @@ function githubDeliveryMetadata(
     ["commentId", comment?.id],
     ["workflowRunId", workflowRun?.id],
     ["releaseId", release?.id],
+    ["deploymentId", deployment?.id],
+    ["deploymentStatusId", deploymentStatus?.id],
+    ["checkRunId", checkRun?.id],
   ];
   for (const [key, value] of fields) {
     const integer = safeInteger(value);
@@ -136,11 +174,19 @@ function githubDeliveryMetadata(
     if (typeof value === "boolean") metadata[key] = value;
   }
   for (const [key, value] of [
+    ["deploymentState", deploymentStatus?.state],
+    ["workflowConclusion", workflowRun?.conclusion],
+    ["checkConclusion", checkRun?.conclusion],
+  ] as const) {
+    if (typeof value === "string" && OUTCOMES.has(value)) metadata[key] = value;
+  }
+  for (const [key, value] of [
     ["before", payload.before],
     ["after", payload.after],
     ["headSha", record(pullRequest?.head)?.sha],
     ["baseSha", record(pullRequest?.base)?.sha],
     ["workflowHeadSha", workflowRun?.head_sha],
+    ["checkHeadSha", checkRun?.head_sha],
   ] as const) {
     const sha = safeSha(value);
     if (sha) metadata[key] = sha;
@@ -213,7 +259,11 @@ export function mountGithubWebhookRoute(
       orderBy: { updatedAt: "desc" },
       take: 5,
     });
-    if (githubRoutines.length === 0) {
+    const payload = parseWebhookPayload(raw, c.req.header("content-type"));
+    const githubEvent = githubEventName(c.req.header("x-github-event"));
+    // A failed deploy or build wakes the agent this repo's webhook points at, with no routine.
+    const failure = isGithubFailureEvent(githubEvent, payload);
+    if (githubRoutines.length === 0 && !failure) {
       return c.json({ ok: true, ignored: true });
     }
 
@@ -221,13 +271,12 @@ export function mountGithubWebhookRoute(
     const deliveryId = c.req.header("x-github-delivery")?.trim();
     if (!deliveryId) return unauthorized();
 
-    const payload = parseWebhookPayload(raw, c.req.header("content-type"));
-    const githubEvent = githubEventName(c.req.header("x-github-event"));
     const eventPrompt = formatGithubEventPrompt(githubEvent, payload);
 
     return c.json(
       await deliverWebhookEvent(deps, target, {
-        prompt: eventPrompt,
+        prompt:
+          githubRoutines.length === 0 ? `${FAILURE_WAKE_GUIDANCE}\n\n${eventPrompt}` : eventPrompt,
         routines: githubRoutines,
         source: "github",
         idempotencyKey: deliveryId,

@@ -182,6 +182,11 @@ function mutationDeps(ticketBoardEnabled = true) {
         return current;
       }),
     },
+    ticketDependency: {
+      findMany: vi.fn(async () => []),
+      createMany: vi.fn(async () => ({ count: 0 })),
+      deleteMany: vi.fn(async () => ({ count: 0 })),
+    },
     ticketComment: {
       create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
         id: "comment-1",
@@ -199,6 +204,7 @@ function mutationDeps(ticketBoardEnabled = true) {
     bot: { findFirst: vi.fn(async () => ({ id: "bot-2" })) },
     user: { findUnique: vi.fn(async () => ({ name: "Pat" })) },
     ticket: tx.ticket,
+    ticketDependency: tx.ticketDependency,
     ticketComment: { findMany: vi.fn(async () => []) },
     $transaction: vi.fn(async (fn: (client: typeof tx) => Promise<unknown>) => fn(tx)),
   };

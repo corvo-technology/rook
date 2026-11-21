@@ -27,13 +27,17 @@ function setup(ticketBoardEnabled: boolean, status = "todo") {
     bot: {
       findFirst: vi.fn(async () => ({ id: "bot-1", userId: "user-1", thread: { id: "thread-1" } })),
     },
+    ticketDependency: { count: vi.fn(async () => 0), findMany: vi.fn(async () => []) },
     task: { create: createTask },
     run: { create: createRun },
   };
   const transaction = vi.fn(async (fn: (client: typeof tx) => Promise<unknown>) => fn(tx));
   const changes = createTicketChangeNotifier({
     ticketBoardEnabled,
-    prisma: { $transaction: transaction } as unknown as PrismaClient,
+    prisma: {
+      $transaction: transaction,
+      ticketDependency: tx.ticketDependency,
+    } as unknown as PrismaClient,
     jobs: { enqueue } as never,
     boardEvents: { notify } as never,
   });

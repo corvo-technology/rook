@@ -16,7 +16,7 @@ import {
 import type { Prisma, PrismaClient, ThreadEvents } from "@corvo/db";
 
 import { localDateTime } from "./current-time.js";
-import { validateRoutineWatch } from "./routine-watch.js";
+import { pickPresetTool, validateRoutineWatch } from "./routine-watch.js";
 
 export { isOneShotRoutineCron, ONCE_ROUTINE_CRON };
 
@@ -467,6 +467,24 @@ async function createWatchFromTool(
     } catch {
       return { error: 'watch must be an object like {"kind":"files","paths":["inbox/"]}.' };
     }
+  }
+  const preset = (raw as { preset?: unknown } | null)?.preset;
+  if ((preset === "calendar" || preset === "email") && !(raw as { tool?: unknown }).tool) {
+    // A preset can find its own read tool, so the agent only says what it wants to hear about.
+    let tool: string | null = null;
+    try {
+      tool = await pickPresetTool(deps, input, preset);
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Could not list the integrations." };
+    }
+    if (!tool) {
+      return {
+        error: `No connected ${preset === "calendar" ? "calendar" : "email"} integration with a read tool. Ask the user to connect one first.`,
+      };
+    }
+    raw = { ...(raw as object), kind: "tool", tool };
+  } else if (preset && raw && typeof raw === "object" && !(raw as { kind?: unknown }).kind) {
+    raw = { ...(raw as object), kind: "tool" };
   }
   const parsed = RoutineWatchSchema.safeParse(raw);
   if (!parsed.success) {

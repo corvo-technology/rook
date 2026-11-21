@@ -29,7 +29,16 @@ const openHelpers = new Set<string>();
 
 export type SpecialMessageBlock = Extract<
   MessageBlock,
-  { kind: "subagent" | "child_bot" | "cloud_agent" | "plan" | "wiki_change" | "memory_fact" }
+  {
+    kind:
+      | "subagent"
+      | "child_bot"
+      | "cloud_agent"
+      | "research"
+      | "plan"
+      | "wiki_change"
+      | "memory_fact";
+  }
 >;
 
 export function isSpecialMessageBlock(block: MessageBlock): block is SpecialMessageBlock {
@@ -37,6 +46,7 @@ export function isSpecialMessageBlock(block: MessageBlock): block is SpecialMess
     block.kind === "subagent" ||
     block.kind === "child_bot" ||
     block.kind === "cloud_agent" ||
+    block.kind === "research" ||
     block.kind === "plan" ||
     block.kind === "wiki_change" ||
     block.kind === "memory_fact"
@@ -329,6 +339,49 @@ export function SpecialMessageCard(props: SpecialMessageCardProps) {
           </Text>
         ) : null}
       </Pressable>
+    );
+  }
+  if (special.kind === "research") {
+    const statusLabel =
+      special.status === "running"
+        ? t("running")
+        : special.status === "finished"
+          ? t("finished")
+          : special.status === "cancelled"
+            ? t("cancelled")
+            : t("failed");
+    return (
+      <View
+        {...actionProps}
+        testID="research-card"
+        accessibilityLabel={`${special.question}: ${statusLabel}`}
+        style={{
+          width: "90%",
+          borderRadius: 18,
+          backgroundColor: tokens.card,
+          paddingHorizontal: 16,
+          paddingVertical: 14,
+        }}
+      >
+        <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8 }}>
+          <Text style={{ flexShrink: 1, color: tokens.cardForeground, ...typeScale.cardTitle }}>
+            {special.question}
+          </Text>
+          <Text
+            style={{
+              color:
+                special.status === "failed"
+                  ? tokens.destructive
+                  : special.status === "running"
+                    ? tokens.warning
+                    : tokens.success,
+              ...typeScale.caption,
+            }}
+          >
+            {statusLabel}
+          </Text>
+        </View>
+      </View>
     );
   }
   if (special.kind === "child_bot") {

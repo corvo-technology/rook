@@ -377,6 +377,22 @@ const working: Scenario = {
         prUrl: "https://example.test/pull/42",
       },
     ]),
+    bot([
+      {
+        kind: "research",
+        researchId: "research-1",
+        question: "How do the main CRMs price a team plan?",
+        status: "running",
+      },
+    ]),
+    bot([
+      {
+        kind: "research",
+        researchId: "research-2",
+        question: "What changed in the EU invoicing rules?",
+        status: "finished",
+      },
+    ]),
     bot([{ kind: "computer", state: "Needs you", text: "The site wants a captcha solved." }]),
     bot([{ kind: "computer", state: "Working", text: "Filling in the booking form." }]),
     bot([{ kind: "progress", text: "Checking Sam's calendar…" }]),

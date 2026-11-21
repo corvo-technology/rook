@@ -644,7 +644,8 @@ export type UsageOperationKind =
   | "subagent"
   | "compaction"
   | "wiki"
-  | "memory";
+  | "memory"
+  | "research";
 
 export interface ModelCallObserver {
   beforeCall(call: {
@@ -814,6 +815,8 @@ export interface BackgroundJobPayloads {
   "messaging.credential-cleanup": { installationId: string; ref: string };
   /** Reconcile durable remote-agent intent; scope is loaded from the database. */
   "cloud_agent.poll": { agentId: string };
+  /** Run a research job: plan, search, read, take notes, then write the cited report. */
+  "research.run": { researchId: string };
   /** Read an Expo push receipt; the token is identified by its digest, never stored. */
   "push.receipt": { userId: string; ticketId: string; tokenDigest: string };
   /** Send what waited for one person's morning as a single push. */

@@ -60,6 +60,7 @@ describe("ticket fields on a ticket", () => {
       continuations: 0,
       acceptanceCriteria: null,
       reviewRounds: 0,
+      sweepEligibleAt: null,
     };
     expect(toTicketDto({ ...row, fields: null }, "RAK").fields).toEqual([]);
     expect(

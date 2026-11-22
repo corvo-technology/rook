@@ -51,7 +51,7 @@ describe("ensureStarterTeam", () => {
     expect(result.bot).toMatchObject({ name: "Rook" });
     expect(f.inputs.find((input) => input.spawnKey === CHIEF_SPAWN_KEY)).toMatchObject({
       name: "Rook",
-      title: "Braço direito",
+      title: "seu braço direito",
       instructions: chiefInstructions("pt-BR"),
       fleetManagement: true,
     });
@@ -121,7 +121,7 @@ describe("ensureStarterTeam", () => {
     await run(f, "en");
     expect(f.inputs.find((input) => input.spawnKey === CHIEF_SPAWN_KEY)).toMatchObject({
       name: "Rook",
-      title: "Right hand",
+      title: "your right hand",
     });
   });
 

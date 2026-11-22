@@ -484,10 +484,6 @@ msgstr "{peopleUsed} / {peopleMax}"
 msgid "{percent}% used"
 msgstr "{percent}% 使用"
 
-#: src/pages/shell/context-meter.tsx
-msgid "{percent}% used · {used} of {windowLabel} tokens"
-msgstr "{percent}% 使用中 · {windowLabel} 中 {used} トークン"
-
 #: src/pages/shell/message-versions.tsx
 msgid "{position} of {count}"
 msgstr "{position} / {count}"
@@ -722,10 +718,6 @@ msgstr "{used} / {limit}"
 msgid "{used} of {limit} tokens"
 msgstr "{used} / {limit} トークン"
 
-#: src/pages/shell/context-meter.tsx
-msgid "{used} tokens"
-msgstr "{used} トークン"
-
 #: src/pages/VaultPage.tsx
 msgid "{variable} is reserved and cannot be used as a command variable. Choose another name."
 msgstr "{variable} は予約されているため、コマンド変数として使えません。別の名前を選んでください。"
@@ -833,6 +825,10 @@ msgstr "{0} のアクセス"
 msgid "Access for {forBotName}"
 msgstr "{forBotName}のアクセス"
 
+#: src/pages/Settings.tsx
+msgid "Access from other apps"
+msgstr "他のアプリからのアクセス"
+
 #: src/pages/connections/McpServerForm.tsx
 msgid "Access token (optional)"
 msgstr "アクセストークン（任意）"
@@ -898,7 +894,6 @@ msgstr "アクティブな顧客"
 
 #: src/components/InboxPanel.tsx
 #: src/pages/ActivityPage.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-header.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Activity"
@@ -1132,10 +1127,6 @@ msgstr "Tregを追加"
 msgid "Add trigger"
 msgstr "トリガーを追加"
 
-#: src/pages/HomePage.tsx
-msgid "Add widget"
-msgstr "ウィジェットを追加"
-
 #: src/pages/partner/PartnerDomain.tsx
 msgid "Add your terms and privacy links in Brand to go live."
 msgstr "公開するには、ブランドで利用規約とプライバシーのリンクを追加してください。"
@@ -1219,7 +1210,6 @@ msgstr "エージェンシー"
 
 #: src/components/WorkingLine.tsx
 #: src/pages/AddStepPanel.tsx
-#: src/pages/home/HomeComposer.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "Agent"
@@ -1227,6 +1217,10 @@ msgstr "エージェント"
 
 #: src/pages/shell/chat-header.tsx
 msgid "Agent computer"
+msgstr "エージェントのコンピューター"
+
+#: src/pages/Settings.tsx
+msgid "Agent computers"
 msgstr "エージェントのコンピューター"
 
 #: src/pages/partner/PartnerConsolePage.tsx
@@ -1239,7 +1233,6 @@ msgstr "エージェントモデル"
 #: src/pages/partner/PartnerTemplatePanel.tsx
 #: src/pages/Shell.tsx
 #: src/pages/shell/channel-members.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/embed-tabs.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/Store.tsx
@@ -1255,6 +1248,10 @@ msgstr "エージェントは一時停止中です"
 #: src/pages/AppAgentAccess.tsx
 msgid "Agents that can use it"
 msgstr "使用できるエージェント"
+
+#: src/pages/Settings.tsx
+msgid "AI models"
+msgstr "AIモデル"
 
 #: src/components/ModelCredits.tsx
 #: src/components/PlanChoice.tsx
@@ -1557,7 +1554,6 @@ msgstr "承認モデル"
 
 #: src/pages/ApprovalsPage.tsx
 #: src/pages/Settings.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Approvals"
@@ -1630,7 +1626,6 @@ msgstr "引数"
 
 #: src/pages/Artifacts.tsx
 #: src/pages/PartnerTemplateEditor.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Artifacts"
 msgstr "成果物"
@@ -2166,7 +2161,6 @@ msgstr "変更中…"
 
 #: src/pages/onboarding/OnboardingPreview.tsx
 #: src/pages/Shell.tsx
-#: src/pages/shell/command-palette.tsx
 msgid "Channels"
 msgstr "チャンネル"
 
@@ -2182,7 +2176,6 @@ msgstr "請求額"
 msgid "Chart failed to render: {error}"
 msgstr "チャートを表示できませんでした: {error}"
 
-#: src/pages/home/HomeHero.tsx
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Chat"
 msgstr "チャット"
@@ -2190,6 +2183,10 @@ msgstr "チャット"
 #: src/pages/shell/composer-mentions.tsx
 msgid "Chat Settings"
 msgstr "チャット設定"
+
+#: src/pages/Settings.tsx
+msgid "ChatGPT or Claude"
+msgstr "ChatGPT または Claude"
 
 #: src/lib/localized-provider-hint.ts
 #: src/pages/usage/usage-sections.tsx
@@ -2508,18 +2505,9 @@ msgstr "複雑なタスク用モデル"
 msgid "Composio"
 msgstr "Composio"
 
-#: src/pages/shell/context-meter.tsx
-msgid "Compress context"
-msgstr "コンテキストを圧縮"
-
-#: src/pages/shell/context-meter.tsx
-msgid "Compressing…"
-msgstr "圧縮中…"
-
 #: src/pages/Onboarding.tsx
 #: src/pages/platform/PricingSection.tsx
 #: src/pages/platform/SimulatorSection.tsx
-#: src/pages/Settings.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Computer"
@@ -2684,6 +2672,10 @@ msgstr "アプリを接続する"
 msgid "Connect API key"
 msgstr "APIキーを接続"
 
+#: src/pages/model-settings/providers-section.tsx
+msgid "Connect ChatGPT or Claude"
+msgstr "ChatGPT または Claude を接続"
+
 #: src/pages/Store.tsx
 msgid "Connect Executor"
 msgstr "Executorを接続"
@@ -2777,10 +2769,6 @@ msgstr "コネクター名"
 #: src/pages/shell/import-status.ts
 msgid "Contains code to run"
 msgstr "実行するコードを含みます"
-
-#: src/pages/shell/context-meter.tsx
-msgid "Context"
-msgstr "コンテキスト"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
@@ -3365,7 +3353,6 @@ msgstr "ルーティンを実行できませんでした"
 #: src/pages/platform/PartnersSection.tsx
 #: src/pages/shell/agent-audience.tsx
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/shell/chat-model-switcher.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/use-space-roster.ts
 #: src/pages/SpaceSettingsPanel.tsx
@@ -4217,7 +4204,6 @@ msgstr "アカウントをお持ちでないですか？"
 #: src/components/PlanCard.tsx
 #: src/lib/ticket-status.ts
 #: src/pages/ActivityList.tsx
-#: src/pages/HomePage.tsx
 #: src/pages/RoutineCard.tsx
 #: src/pages/RoutineTimeGrid.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
@@ -4696,10 +4682,6 @@ msgstr "フィルター"
 msgid "Finance"
 msgstr "財務"
 
-#: src/pages/home/HomeComposer.tsx
-msgid "Find an agent"
-msgstr "エージェントを探す"
-
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Find models"
@@ -4763,10 +4745,6 @@ msgstr "{forWhom} のため"
 #: src/pages/BotContextMenu.tsx
 msgid "For 1 hour"
 msgstr "1時間"
-
-#: src/pages/shell/composer-model-choice.tsx
-msgid "For this conversation"
-msgstr "この会話で使う"
 
 #: src/components/PlanChoice.tsx
 msgid "For up to {count} people"
@@ -4893,11 +4871,6 @@ msgstr "{name} の読み取りアクセスを許可しますか？"
 msgid "Give work"
 msgstr "仕事を渡す"
 
-#: src/pages/shell/command-palette.tsx
-#: src/pages/shell/sidebar-team.tsx
-msgid "Go to…"
-msgstr "移動…"
-
 #: src/pages/shell/composer.tsx
 msgid "Goes to {recipient}"
 msgstr "{recipient} に届きます"
@@ -4997,10 +4970,6 @@ msgstr "こんにちは。返信を読み上げるときは、このような声
 msgid "Hi. I'm Rook. We'll set up your team in about two minutes."
 msgstr "こんにちは、Rook です。2 分ほどでチームを作りましょう。"
 
-#: src/pages/home/HomeCard.tsx
-msgid "Hide {name}"
-msgstr "{name}を非表示"
-
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Hide from customers"
 msgstr "顧客に表示しない"
@@ -5041,7 +5010,6 @@ msgstr "長押しで話す"
 msgid "Hold to talk, release to send"
 msgstr "長押しで話し、離すと送信"
 
-#: src/pages/home/HomeHero.tsx
 #: src/pages/shell/embed-tabs.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Home"
@@ -5950,10 +5918,6 @@ msgstr "リクエストあたりの最大画像数"
 msgid "Maximum output tokens"
 msgstr "最大出力トークン数"
 
-#: src/pages/Settings.tsx
-msgid "MCP"
-msgstr "MCP"
-
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "MCP endpoint"
 msgstr "MCPエンドポイント"
@@ -6007,7 +5971,6 @@ msgstr "メンバー：{members}"
 #: src/pages/Settings.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/shell/sidebar-team.tsx
 msgid "Memory"
 msgstr "メモリ"
 
@@ -6182,7 +6145,6 @@ msgid "Model options"
 msgstr "モデルのオプション"
 
 #: src/pages/platform/SimulatorSection.tsx
-#: src/pages/Settings.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Models"
 msgstr "モデル"
@@ -6293,14 +6255,6 @@ msgstr "{0}を下へ"
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Move {0} up"
 msgstr "{0}を上へ"
-
-#: src/pages/home/HomeCard.tsx
-msgid "Move {name} earlier"
-msgstr "{name}を前へ移動"
-
-#: src/pages/home/HomeCard.tsx
-msgid "Move {name} later"
-msgstr "{name}を後ろへ移動"
 
 #: src/pages/ModelRoleSettings.tsx
 msgid "Move down"
@@ -6580,10 +6534,6 @@ msgstr "アクセスなし"
 msgid "No activity yet."
 msgstr "まだアクティビティはありません。"
 
-#: src/pages/home/HomeComposer.tsx
-msgid "No agent found"
-msgstr "エージェントが見つかりません"
-
 #: src/pages/shell/routing-line.tsx
 msgid "No answer needed"
 msgstr "応答は不要です"
@@ -6721,7 +6671,6 @@ msgstr "リモートMCPサーバーが見つかりません"
 
 #: src/pages/AgentsStore.tsx
 #: src/pages/model-settings/providers-section.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/SkillsStore.tsx
 #: src/pages/SpaceSearch.tsx
 #: src/pages/Store.tsx
@@ -6944,10 +6893,6 @@ msgstr "スケジュール"
 msgid "on day {day} at {time}"
 msgstr "{day}日 {time}"
 
-#: src/pages/home/HomeHero.tsx
-msgid "On open"
-msgstr "起動時"
-
 #: src/pages/platform/SimulatorSection.tsx
 msgid "On own models (%)"
 msgstr "自前モデルでの利用(%)"
@@ -7160,10 +7105,6 @@ msgstr "組織のAPIキー"
 msgid "Organization ID"
 msgstr "組織ID"
 
-#: src/pages/HomePage.tsx
-msgid "Organize"
-msgstr "整理"
-
 #: src/pages/shell/chat-context.tsx
 msgid "Original message unavailable"
 msgstr "元のメッセージを表示できません"
@@ -7241,10 +7182,6 @@ msgstr "ページの本文"
 msgid "PagerDuty incident"
 msgstr "PagerDutyインシデント"
 
-#: src/pages/shell/command-palette.tsx
-msgid "Pages"
-msgstr "ページ"
-
 #: src/pages/partner/PartnerInvoices.tsx
 #: src/pages/partner/PartnerPayments.tsx
 #: src/pages/partner/PartnerRevenue.tsx
@@ -7311,6 +7248,10 @@ msgstr "このサーバーではパスワードによるログインが無効に
 #: src/pages/Auth.tsx
 msgid "Password updated"
 msgstr "パスワードを更新しました"
+
+#: src/pages/Settings.tsx
+msgid "Passwords and access"
+msgstr "パスワードとアクセス"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
@@ -7403,7 +7344,6 @@ msgstr "保留中"
 #: src/pages/Onboarding.tsx
 #: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/shell/channel-members.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/StoreCategoryChips.tsx
@@ -8384,7 +8324,6 @@ msgstr "ルーティンのフロー"
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/embed-tabs.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Routines"
@@ -8614,7 +8553,6 @@ msgstr "画面が接続されていません"
 #: src/pages/shell/channel-find.tsx
 #: src/pages/shell/channel-members.tsx
 #: src/pages/shell/chat-model-picker.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/shell-sidebar.tsx
 #: src/pages/shell/sidebar-header.tsx
 #: src/pages/Store.tsx
@@ -8639,10 +8577,6 @@ msgstr "アーティファクトを検索…"
 #: src/pages/Store.tsx
 msgid "Search by domain"
 msgstr "ドメインで検索"
-
-#: src/pages/shell/command-palette.tsx
-msgid "Search channels, agents, people and pages"
-msgstr "チャンネル、エージェント、メンバー、ページを検索"
 
 #: src/pages/partner/PartnerCustomers.tsx
 msgid "Search customers"
@@ -9089,7 +9023,6 @@ msgid "Space"
 msgstr "スペース"
 
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/shell/chat-model-switcher.tsx
 msgid "Space default"
 msgstr "スペースのデフォルト"
 
@@ -9420,7 +9353,6 @@ msgid "Task settings"
 msgstr "タスクの設定"
 
 #: src/pages/Board.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/embed-tabs.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Tasks"
@@ -9441,8 +9373,6 @@ msgstr "ティーチング中です。新しいメッセージを送信する前
 #: src/lib/plan-view.ts
 #: src/pages/Onboarding.tsx
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/shell/command-palette.tsx
-#: src/pages/shell/sidebar-team.tsx
 #: src/pages/TeamPage.tsx
 #: src/pages/VaultPage.tsx
 msgid "Team"
@@ -10243,7 +10173,6 @@ msgstr "URL"
 
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/Settings.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/Usage.tsx
 msgid "Usage"
@@ -10422,10 +10351,6 @@ msgstr "値"
 #: src/pages/shell/message-cards.tsx
 msgid "Variations"
 msgstr "バリエーション"
-
-#: src/pages/Settings.tsx
-msgid "Vault"
-msgstr "保管庫"
 
 #: src/pages/partner/PartnerDomain.tsx
 #: src/pages/platform/PartnersSection.tsx
@@ -10743,11 +10668,6 @@ msgstr "まだ確認していない人は？"
 msgid "Who sees this channel"
 msgstr "このチャンネルを見られる人"
 
-#: src/pages/HomePage.tsx
-msgid "Widget"
-msgstr "ウィジェット"
-
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/WikiPage.tsx
 msgid "Wiki"

@@ -1,13 +1,6 @@
 import type { Bot, NavLink } from "@corvo/contracts";
 import { accountDisplay } from "@corvo/core";
-import {
-  Button,
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-  Sidebar,
-} from "@corvo/ui-web";
+import { Button, InputGroup, InputGroupAddon, InputGroupInput, Sidebar } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { Search } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
@@ -76,12 +69,9 @@ export function ShellSidebar({
   paused = false,
   onResume,
   activeDmUserId,
-  onQuickSwitch,
 }: {
   /** The person whose conversation is open, when one is. */
   activeDmUserId?: string;
-  /** Opens the quick switcher. */
-  onQuickSwitch?: () => void;
   isMobile: boolean;
   mobileOpen: boolean;
   setMobileOpen: (open: boolean) => void;
@@ -230,8 +220,6 @@ export function ShellSidebar({
           {mini ? null : (
             <SidebarNavLive
               ticketBoardEnabled={ticketBoardEnabled}
-              embedded={isEmbedded()}
-              onQuickSwitch={onQuickSwitch}
               onOpen={(to) => {
                 setMobileOpen(false);
                 navigate(to);

@@ -22,14 +22,23 @@ import type { ConnectableProvider } from "./model-settings/role-model-picker";
 import { SpaceBotsModelNotice } from "./model-settings/space-bots-model";
 import { useModelSettings } from "./model-settings/use-model-settings";
 
+/** The providers behind a ChatGPT or Claude subscription or key. */
+const PERSONAL_AI_PROVIDERS: readonly string[] = ["anthropic", "openai-codex", "openai"];
+
 export function ModelSettingsOverlay({
   scope,
+  simple = false,
 }: {
   /**
    * The account's models, or the bound Space's own when it overrides them. Connections are
    * account-wide, so a Space shows only its role lists.
    */
   scope: SettingsScope;
+  /**
+   * Only the connections to ChatGPT or Claude, with none of the model roles, other providers
+   * or limits. The full page lives under Advanced.
+   */
+  simple?: boolean;
 }) {
   const { t } = useLingui();
   const model = useModelSettings(scope);
@@ -287,7 +296,34 @@ export function ModelSettingsOverlay({
           {notice}
         </p>
       ) : null}
-      {me ? (
+      {me && simple ? (
+        <ProvidersSection
+          simple
+          credentials={credentials.filter((entry) =>
+            PERSONAL_AI_PROVIDERS.includes(entry.provider),
+          )}
+          providers={allProviders.filter((entry) => PERSONAL_AI_PROVIDERS.includes(entry.id))}
+          name={connectionName}
+          disabled={busy}
+          onAdd={(next) => openConnection(next, null, null, "providers:add")}
+          onOpen={(entry) =>
+            connectionAt === `providers:${entry.id}`
+              ? closeConnection()
+              : openConnection(
+                  { id: entry.provider, name: entry.provider },
+                  null,
+                  entry.id,
+                  `providers:${entry.id}`,
+                )
+          }
+          panel={
+            connectionAt?.startsWith("providers:")
+              ? panelFor(connectionAt === "providers:add")
+              : null
+          }
+          panelAt={connectionAt?.slice("providers:".length) ?? null}
+        />
+      ) : me ? (
         <>
           <ModelRoleSettings
             userId={me.userId}

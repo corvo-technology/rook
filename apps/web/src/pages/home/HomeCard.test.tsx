@@ -1,47 +1,23 @@
 // @vitest-environment jsdom
-import type { ReactNode } from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
-import { expect, it, vi } from "vitest";
+import { expect, it } from "vitest";
 import { HomeCard } from "./HomeCard";
 
-vi.mock("@lingui/react/macro", () => ({
-  useLingui: () => ({
-    t: (strings: TemplateStringsArray, ...values: unknown[]) =>
-      strings.reduce((text, part, index) => text + part + (values[index] ?? ""), ""),
-  }),
-}));
-
-function card(name: string): ReactNode {
-  return (
-    <HomeCard title={name} name={name} testId={name} organizing onMove={() => {}} onHide={() => {}}>
-      body
-    </HomeCard>
-  );
-}
-
-it("names each organize control after its card", async () => {
-  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+it("shows the title and its action, with nothing to move or hide the card", async () => {
+  (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   const host = document.createElement("div");
   document.body.append(host);
   const root = createRoot(host);
   await act(async () =>
     root.render(
-      <>
-        {card("Working now")}
-        {card("Next routines")}
-      </>,
+      <HomeCard title="Working now" testId="card" action={<button type="button">See all</button>}>
+        body
+      </HomeCard>,
     ),
   );
-  const names = [...host.querySelectorAll("button")].map((b) => b.getAttribute("aria-label"));
-  expect(names).toEqual([
-    "Move Working now earlier",
-    "Move Working now later",
-    "Hide Working now",
-    "Move Next routines earlier",
-    "Move Next routines later",
-    "Hide Next routines",
-  ]);
+  expect(host.querySelector("h2")?.textContent).toBe("Working now");
+  expect([...host.querySelectorAll("button")].map((b) => b.textContent)).toEqual(["See all"]);
   await act(async () => root.unmount());
   host.remove();
 });

@@ -123,19 +123,6 @@ for (const theme of ["light", "dark"] as const) {
   });
 }
 
-test("Home lets a person hide a card and brings it back", async ({ page }) => {
-  await signup(page, `home-organize-${Date.now()}@corvo.test`, "password12", "Org");
-  await page.goto("/app/home");
-  await page.getByTestId("home-organize").click();
-  await page.getByTestId("home-waiting").getByRole("button", { name: "Ocultar" }).click();
-  await expect(page.getByTestId("home-waiting")).toHaveCount(0);
-  await page.reload();
-  await expect(page.getByTestId("home-waiting")).toHaveCount(0);
-  await page.getByRole("button", { name: "Adicionar widget" }).click();
-  await page.getByRole("menuitem", { name: "Esperando você" }).click();
-  await expect(page.getByTestId("home-waiting")).toBeVisible();
-});
-
 test("asking from Home starts the chat with the Rook", async ({ page }) => {
   await signup(page, `home-ask-${Date.now()}@corvo.test`, "password12", "Ask");
   await page.goto("/app/home");

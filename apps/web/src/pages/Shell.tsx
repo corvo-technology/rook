@@ -11,6 +11,7 @@ import {
   APP_CATALOG,
   answerableAskMessageIds,
   appsForSurface,
+  botRole,
   CHIEF_BOT_SPAWN_KEY,
   channelMessageSender,
   dismissableAskMessageIds,
@@ -99,7 +100,6 @@ import { ChatContextMenu } from "./shell/chat-context-menu";
 import { ChatHeader } from "./shell/chat-header";
 import { FALLBACK_BOT_COLOR } from "./shell/chat-shared";
 import { Composer } from "./shell/composer";
-import { ComposerModelChoice } from "./shell/composer-model-choice";
 import { ComputerOverlay } from "./shell/computer-overlay";
 import { ComputerPanel } from "./shell/computer-panel";
 import type { CreateBotPanelInput } from "./shell/create-bot-panel";
@@ -153,7 +153,7 @@ export function ShellPage({ page }: { page?: ReactNode }) {
 }
 
 function SpaceShell({ page }: { page?: ReactNode }) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const { botId, groupId, userId: dmUserId } = useParams();
   const [shellSpaceId] = useState(selectedSpaceId);
   const [rpc] = useState(() => createSpaceRpc(shellSpaceId));
@@ -558,10 +558,10 @@ function SpaceShell({ page }: { page?: ReactNode }) {
   const resolveTranscriptBot = useCallback(
     (botId: string) => {
       const bot = bots.find((candidate) => candidate.id === botId);
-      if (bot) return bot;
+      if (bot) return { ...bot, title: botRole(bot, i18n.locale) };
       return transcriptMembers?.find((member) => member.botId === botId);
     },
-    [bots, transcriptMembers],
+    [bots, transcriptMembers, i18n.locale],
   );
   const workingBots: GroupAvatarMember[] = workingRuns.map((run) => {
     const bot = resolveTranscriptBot(run.botId);
@@ -1035,7 +1035,6 @@ function SpaceShell({ page }: { page?: ReactNode }) {
           footerLogos={footerLogos}
           user={session.data?.user}
           ticketBoardEnabled={Boolean(bootstrapMe?.ticketBoardEnabled)}
-          onQuickSwitch={() => dialogs.setCommandPaletteOpen(true)}
           navLinks={desktopBridge() ? [] : (bootstrapMe?.navLinks ?? [])}
           openSettings={openSettings}
           openIntegrations={() => navigate(storePath(activeBotId.current))}
@@ -1105,7 +1104,6 @@ function SpaceShell({ page }: { page?: ReactNode }) {
                 activeSnapshot={activeSnapshot}
                 phoneCallsEnabled={Boolean(bootstrapMe?.phoneCallsEnabled)}
                 inCall={Boolean(active) && call?.botId === active?.id}
-                running={composerRunning}
                 computerPanelOpen={panel === "computer"}
                 onOpenNavigation={() => setMobileSidebarOpen(true)}
                 onOpenChatSettings={() => setPanel(inGroup ? "group-settings" : "settings")}
@@ -1125,13 +1123,6 @@ function SpaceShell({ page }: { page?: ReactNode }) {
                     return;
                   }
                   callBot(bot);
-                }}
-                onChangeModel={async (bot, patch) => {
-                  const updated = await rpc.bots.update({ botId: bot.id, ...patch });
-                  setBots((current) =>
-                    current.map((item) => (item.id === updated.id ? updated : item)),
-                  );
-                  await refreshBots().catch(() => undefined);
                 }}
                 onToggleComputer={(bot) => {
                   const next = panel === "computer" ? null : "computer";
@@ -1185,7 +1176,7 @@ function SpaceShell({ page }: { page?: ReactNode }) {
                         : {
                             id: active.id,
                             name: active.name,
-                            title: active.title,
+                            title: botRole(active, i18n.locale),
                             color: active.color,
                           }
                   }
@@ -1236,9 +1227,6 @@ function SpaceShell({ page }: { page?: ReactNode }) {
                   enterToSend={enterToSend}
                   credentialBotId={inGroup ? undefined : active ? String(active.id) : undefined}
                   onImportAgent={(agent) => openImport(agent, false)}
-                  modelControl={
-                    !inGroup && active ? <ComposerModelChoice bot={active} /> : undefined
-                  }
                   activeName={
                     inGroup
                       ? `#${activeGroup?.name ?? activeSnapshot?.groupName ?? ""}`
@@ -1441,17 +1429,14 @@ function SpaceShell({ page }: { page?: ReactNode }) {
           rpc={rpc}
           spaces={spaces}
           bots={bots}
-          groups={groups.filter((group) => !group.archivedAt)}
           activeId={active?.id}
           activeGroupId={activeGroup?.id}
           alive={alive}
-          navigate={navigate}
           setPanel={setPanel}
           refreshBots={refreshBots}
           removeSpace={removeSpace}
           setSpacePaused={setSpacePaused}
           openSpaceSettings={openSpaceSettings}
-          closeMobileSidebar={() => setMobileSidebarOpen(false)}
           createBot={createBot}
           onImportFromCreate={() => {
             dialogs.setCreateBotOpen(false);

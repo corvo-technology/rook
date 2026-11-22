@@ -5,7 +5,7 @@ import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 vi.mock("@lingui/react/macro", () => ({
-  useLingui: () => ({ t: (parts: TemplateStringsArray) => parts.join("") }),
+  useLingui: () => ({ t: (parts: TemplateStringsArray) => parts.join(""), i18n: { locale: "en" } }),
   Trans: ({ children }: { children: ReactNode }) => children,
 }));
 vi.mock("@corvo/ui-web", () => ({
@@ -18,7 +18,6 @@ vi.mock("../../components/IconTooltip", () => ({
 }));
 vi.mock("./channel-find", () => ({ ChannelFind: () => null, pinSignature: () => "" }));
 vi.mock("./chat-model-switcher", () => ({ ChatModelSwitcher: () => null }));
-vi.mock("./context-meter", () => ({ ContextMeter: () => null }));
 
 import { ChatHeader } from "./chat-header";
 
@@ -45,13 +44,11 @@ async function render(over: Partial<ComponentProps<typeof ChatHeader>> = {}) {
         activeSnapshot={null}
         phoneCallsEnabled={false}
         inCall={false}
-        running={false}
         computerPanelOpen={false}
         onOpenNavigation={vi.fn()}
         onOpenChatSettings={vi.fn()}
         onCall={vi.fn()}
         onToggleComputer={vi.fn()}
-        onChangeModel={vi.fn()}
         onOpenSquad={onOpenSquad}
         onJumpToMessage={vi.fn()}
         memberName={() => undefined}

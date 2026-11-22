@@ -1,15 +1,8 @@
 import type { Bot, HomeChecklistItemId } from "@corvo/contracts";
-import {
-  Badge,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@corvo/ui-web";
+import { Badge } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { takeInitialBootstrap } from "../lib/bootstrap";
 import { isEmbedded, openInHost } from "../lib/embed";
@@ -18,15 +11,6 @@ import { quickActions } from "../lib/embedded-home";
 import { findFirstBot } from "../lib/first-bot";
 import { daypart, routinesCard, waitingCard, workingCard } from "../lib/home-cards";
 import { greetingName, statusCounts, timelineGroups } from "../lib/home-live";
-import type { HomeCardId } from "../lib/home-prefs";
-import {
-  moveCard,
-  readHomeLayout,
-  readStartPage,
-  setCardHidden,
-  writeHomeLayout,
-  writeStartPage,
-} from "../lib/home-prefs";
 import { useSpaceQueries } from "../lib/query";
 import { useSpaceHint } from "../lib/space-hints";
 import { useSpaceRpc } from "../lib/space-rpc";
@@ -62,6 +46,9 @@ function checklistTarget(id: HomeChecklistItemId, chiefId: string | null): strin
       return "/settings/members";
   }
 }
+
+type HomeCardId = "waiting" | "working" | "routines";
+const CARD_ORDER: readonly HomeCardId[] = ["waiting", "working", "routines"];
 
 const rise = (i: number) => ({ "--rk-i": i }) as React.CSSProperties;
 
@@ -147,8 +134,8 @@ export function HomePage() {
         ? t`Good afternoon`
         : t`Good evening`;
 
-  const [agentId, setAgentId] = useState<string | null>(null);
-  const target = bots.find((bot) => bot.id === agentId) ?? chief;
+  // The prompt always goes to the Chief, who hands the work to the right agent.
+  const target = chief;
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -183,20 +170,6 @@ export function HomePage() {
     invite: t`Invite someone`,
   };
 
-  const userId = bootstrap?.me.userId;
-  const [start, setStart] = useState(() => readStartPage(userId));
-  const [layout, setLayout] = useState(() => readHomeLayout(userId));
-  const [organizing, setOrganizing] = useState(false);
-  // The person is known once the bootstrap lands; read their choices then.
-  useEffect(() => {
-    setStart(readStartPage(userId));
-    setLayout(readHomeLayout(userId));
-  }, [userId]);
-  const update = (next: typeof layout) => {
-    setLayout(next);
-    writeHomeLayout(userId, next);
-  };
-  const shown = layout.order.filter((id) => !layout.hidden.includes(id));
   const cardTitles: Record<HomeCardId, string> = {
     waiting: t`Waiting for you`,
     working: t`Working now`,
@@ -250,9 +223,7 @@ export function HomePage() {
         composer={
           target ? (
             <HomeComposer
-              bots={bots}
               target={target}
-              onTarget={setAgentId}
               text={text}
               onText={setText}
               sending={sending}
@@ -284,15 +255,7 @@ export function HomePage() {
       />
       <div className="relative mx-auto flex w-full max-w-5xl flex-col gap-8 px-5 py-10 sm:px-10 sm:py-14">
         <div className="rk-home-rise" style={rise(0)}>
-          <HomeHero
-            greeting={greeting}
-            status={status}
-            start={start}
-            onStart={(page) => {
-              setStart(page);
-              writeStartPage(userId, page);
-            }}
-          />
+          <HomeHero greeting={greeting} status={status} />
         </div>
 
         {list ? (
@@ -309,9 +272,7 @@ export function HomePage() {
         {target ? (
           <div className="rk-home-rise" style={rise(2)}>
             <HomeComposer
-              bots={bots}
               target={target}
-              onTarget={setAgentId}
               text={text}
               onText={setText}
               sending={sending}
@@ -325,42 +286,9 @@ export function HomePage() {
         <section className="rk-home-rise flex flex-col gap-4" style={rise(3)}>
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-2xl font-semibold tracking-tight">{t`My Home`}</h2>
-            <div className="flex items-center rounded-full border border-border bg-card p-0.5 text-sm">
-              <button
-                type="button"
-                aria-pressed={organizing}
-                data-testid="home-organize"
-                className={`rounded-full px-3 py-1 outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                  organizing ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-                }`}
-                onClick={() => setOrganizing((value) => !value)}
-              >
-                {organizing ? t`Done` : t`Organize`}
-              </button>
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  disabled={layout.hidden.length === 0}
-                  aria-label={t`Add widget`}
-                  className="flex items-center gap-1 rounded-full px-3 py-1 outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40"
-                >
-                  <Plus aria-hidden className="size-3.5" />
-                  {t`Widget`}
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {layout.hidden.map((id) => (
-                    <DropdownMenuItem
-                      key={id}
-                      onClick={() => update(setCardHidden(layout, id, false))}
-                    >
-                      {cardTitles[id]}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
           </div>
           <div className="grid items-stretch gap-4 md:grid-cols-2">
-            {shown.map((id, index) => (
+            {CARD_ORDER.map((id, index) => (
               <div
                 key={id}
                 className={`rk-home-rise flex flex-col ${id === "routines" ? "md:col-span-2" : ""}`}
@@ -369,7 +297,6 @@ export function HomePage() {
                 <HomeCard
                   className="flex-1"
                   testId={testIds[id]}
-                  name={cardTitles[id]}
                   title={
                     <>
                       {cardTitles[id]}
@@ -382,9 +309,6 @@ export function HomePage() {
                   }
                   action={action[id]}
                   band={id !== "routines"}
-                  organizing={organizing}
-                  onMove={(by) => update(moveCard(layout, id, by))}
-                  onHide={() => update(setCardHidden(layout, id, true))}
                 >
                   {body[id]}
                 </HomeCard>

@@ -10,7 +10,6 @@ import { WaitingList } from "./WaitingList";
 import { WorkingFeed } from "./WorkingFeed";
 
 const rise = (i: number) => ({ "--rk-i": i }) as React.CSSProperties;
-const noop = () => undefined;
 
 /**
  * Home inside a partner's product: a greeting, the shortcuts of the partner's trade, a prompt for
@@ -96,7 +95,6 @@ export function EmbeddedHome({
               className="flex-1"
               testId="home-waiting"
               title={t`Waiting for you`}
-              name={t`Waiting for you`}
               action={
                 waiting.total > 0 ? (
                   <button
@@ -109,24 +107,12 @@ export function EmbeddedHome({
                 ) : null
               }
               band={false}
-              organizing={false}
-              onMove={noop}
-              onHide={noop}
             >
               <WaitingList items={waiting.items} />
             </HomeCard>
           </div>
           <div className="rk-home-rise flex flex-col" style={rise(5)}>
-            <HomeCard
-              className="flex-1"
-              testId="home-working"
-              title={t`Working now`}
-              name={t`Working now`}
-              band={false}
-              organizing={false}
-              onMove={noop}
-              onHide={noop}
-            >
+            <HomeCard className="flex-1" testId="home-working" title={t`Working now`} band={false}>
               <WorkingFeed runs={working.items} bots={bots} onGiveWork={onGiveWork} />
             </HomeCard>
           </div>

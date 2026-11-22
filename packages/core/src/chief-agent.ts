@@ -8,7 +8,7 @@ import type { AgentCatalogLocale } from "@corvo/contracts";
  */
 export const CHIEF_AGENT = {
   name: { en: "Rook", "pt-BR": "Rook" },
-  title: { en: "Right hand", "pt-BR": "Braço direito" },
+  title: { en: "your right hand", "pt-BR": "seu braço direito" },
   description: {
     en: "Your right hand. Tell it what you need and it gets the right agent on it.",
     "pt-BR": "Seu braço direito. Diga o que precisa e ele aciona o agente certo.",

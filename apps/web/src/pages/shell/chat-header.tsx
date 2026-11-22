@@ -1,13 +1,11 @@
 import type { Bot, Group, ThreadSnapshot } from "@corvo/contracts";
-import type { modelChangePatch } from "@corvo/core";
+import { botRole } from "@corvo/core";
 import { BotAvatar, Button } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import { Menu, Monitor, Phone } from "lucide-react";
 import { IconTooltip } from "../../components/IconTooltip";
 import { ChannelFind, pinSignature } from "./channel-find";
 import { ChannelHeader } from "./channel-header";
-import { ChatModelSwitcher } from "./chat-model-switcher";
-import { ContextMeter } from "./context-meter";
 
 /** The solid row above the transcript: navigation, the chat's name, call and computer. */
 export function ChatHeader({
@@ -17,13 +15,11 @@ export function ChatHeader({
   activeSnapshot,
   phoneCallsEnabled,
   inCall,
-  running,
   computerPanelOpen,
   onOpenNavigation,
   onOpenChatSettings,
   onCall,
   onToggleComputer,
-  onChangeModel,
   onOpenSquad,
   onOpenMembers,
   membersOpen,
@@ -37,13 +33,11 @@ export function ChatHeader({
   activeSnapshot: ThreadSnapshot | null;
   phoneCallsEnabled: boolean;
   inCall: boolean;
-  running: boolean;
   computerPanelOpen: boolean;
   onOpenNavigation: () => void;
   onOpenChatSettings: () => void;
   onCall: (bot: Bot) => void;
   onToggleComputer: (bot: Bot) => void;
-  onChangeModel: (bot: Bot, patch: ReturnType<typeof modelChangePatch>) => Promise<void>;
   onOpenSquad: () => void;
   onOpenMembers?: () => void;
   membersOpen?: boolean;
@@ -52,7 +46,7 @@ export function ChatHeader({
   onJumpToMessage: (messageId: string) => void;
   memberName: (botId: string | undefined) => string | undefined;
 }) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   if (inGroup) {
     return (
       <ChannelHeader
@@ -110,21 +104,17 @@ export function ChatHeader({
           <span className="truncate text-name font-semibold text-foreground" dir="auto">
             {active?.name ?? t`Select an agent`}
           </span>
-          {active?.title ? (
+          {botRole(active, i18n.locale) ? (
             <span
               dir="auto"
               className="hidden min-w-0 truncate text-meta text-muted-foreground md:block"
             >
-              {active.title}
+              {botRole(active, i18n.locale)}
             </span>
           ) : null}
         </span>
       </button>
       <div className="app-no-drag flex min-w-0 shrink-0 items-center gap-1 md:ms-auto [&_button]:shrink-0">
-        {active ? <ContextMeter botId={active.id} running={running} /> : null}
-        {active ? (
-          <ChatModelSwitcher bot={active} onChange={(patch) => onChangeModel(active, patch)} />
-        ) : null}
         {phoneCallsEnabled && active ? (
           <IconTooltip label={inCall ? t`Open call` : t`Call`}>
             <Button

@@ -192,7 +192,8 @@ it("goes to General for a space that is gone", async () => {
   expect(shown(container)).toBe("general");
 });
 
-it("hides Updates outside the desktop app and shows it inside", async () => {
+it("hides Updates outside the desktop app and shows it inside, under Advanced", async () => {
+  window.localStorage.setItem("corvo:settings-advanced-open", "1");
   seed({});
   const web = await render("/settings/general");
   expect(navItem(web, "updates")).toBeNull();
@@ -200,6 +201,31 @@ it("hides Updates outside the desktop app and shows it inside", async () => {
   vi.stubGlobal("corvoDesktop", { update: {} });
   const desktop = await render("/settings/general");
   expect(navItem(desktop, "updates")).not.toBeNull();
+  window.localStorage.removeItem("corvo:settings-advanced-open");
+});
+
+it("keeps the developer sections out of the nav until Advanced is opened", async () => {
+  window.localStorage.removeItem("corvo:settings-advanced-open");
+  seed({});
+  const container = await render("/settings/general");
+  for (const id of [
+    "general",
+    "voice",
+    "approvals",
+    "members",
+    "usage",
+    "ai-account",
+    "connections",
+  ])
+    expect(navItem(container, id), id).not.toBeNull();
+  for (const id of ["models", "mcp-access", "vault", "memory"])
+    expect(navItem(container, id), id).toBeNull();
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('[data-testid="settings-nav-advanced"]')?.click(),
+  );
+  for (const id of ["models", "mcp-access", "vault", "memory"])
+    expect(navItem(container, id), id).not.toBeNull();
+  window.localStorage.removeItem("corvo:settings-advanced-open");
 });
 
 it("shows Connections to every member, and sends the old pages there", async () => {

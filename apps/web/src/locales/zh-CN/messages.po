@@ -484,10 +484,6 @@ msgstr "{peopleUsed} / {peopleMax}"
 msgid "{percent}% used"
 msgstr "已用 {percent}%"
 
-#: src/pages/shell/context-meter.tsx
-msgid "{percent}% used · {used} of {windowLabel} tokens"
-msgstr "已使用 {percent}% · {used} / {windowLabel} 个令牌"
-
 #: src/pages/shell/message-versions.tsx
 msgid "{position} of {count}"
 msgstr "第 {position} / {count}"
@@ -722,10 +718,6 @@ msgstr "{used} / {limit}"
 msgid "{used} of {limit} tokens"
 msgstr "{used} / {limit} 个 token"
 
-#: src/pages/shell/context-meter.tsx
-msgid "{used} tokens"
-msgstr "{used} 个令牌"
-
 #: src/pages/VaultPage.tsx
 msgid "{variable} is reserved and cannot be used as a command variable. Choose another name."
 msgstr "{variable} 是保留名称，不能用作命令变量。请换一个名称。"
@@ -833,6 +825,10 @@ msgstr "{0} 的访问权限"
 msgid "Access for {forBotName}"
 msgstr "{forBotName} 的访问权限"
 
+#: src/pages/Settings.tsx
+msgid "Access from other apps"
+msgstr "其他应用的访问"
+
 #: src/pages/connections/McpServerForm.tsx
 msgid "Access token (optional)"
 msgstr "访问令牌（可选）"
@@ -898,7 +894,6 @@ msgstr "活跃客户"
 
 #: src/components/InboxPanel.tsx
 #: src/pages/ActivityPage.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-header.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Activity"
@@ -1132,10 +1127,6 @@ msgstr "添加 Treg"
 msgid "Add trigger"
 msgstr "添加触发器"
 
-#: src/pages/HomePage.tsx
-msgid "Add widget"
-msgstr "添加小组件"
-
 #: src/pages/partner/PartnerDomain.tsx
 msgid "Add your terms and privacy links in Brand to go live."
 msgstr "在“品牌”中添加条款和隐私链接即可上线。"
@@ -1219,7 +1210,6 @@ msgstr "代理机构"
 
 #: src/components/WorkingLine.tsx
 #: src/pages/AddStepPanel.tsx
-#: src/pages/home/HomeComposer.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "Agent"
@@ -1228,6 +1218,10 @@ msgstr "智能体"
 #: src/pages/shell/chat-header.tsx
 msgid "Agent computer"
 msgstr "Agent 电脑"
+
+#: src/pages/Settings.tsx
+msgid "Agent computers"
+msgstr "智能体的电脑"
 
 #: src/pages/partner/PartnerConsolePage.tsx
 msgid "Agent model"
@@ -1239,7 +1233,6 @@ msgstr "智能体模板"
 #: src/pages/partner/PartnerTemplatePanel.tsx
 #: src/pages/Shell.tsx
 #: src/pages/shell/channel-members.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/embed-tabs.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/Store.tsx
@@ -1255,6 +1248,10 @@ msgstr "智能体已暂停"
 #: src/pages/AppAgentAccess.tsx
 msgid "Agents that can use it"
 msgstr "可以使用它的智能体"
+
+#: src/pages/Settings.tsx
+msgid "AI models"
+msgstr "AI 模型"
 
 #: src/components/ModelCredits.tsx
 #: src/components/PlanChoice.tsx
@@ -1557,7 +1554,6 @@ msgstr "审批模型"
 
 #: src/pages/ApprovalsPage.tsx
 #: src/pages/Settings.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Approvals"
@@ -1630,7 +1626,6 @@ msgstr "参数"
 
 #: src/pages/Artifacts.tsx
 #: src/pages/PartnerTemplateEditor.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Artifacts"
 msgstr "产物"
@@ -2166,7 +2161,6 @@ msgstr "正在修改…"
 
 #: src/pages/onboarding/OnboardingPreview.tsx
 #: src/pages/Shell.tsx
-#: src/pages/shell/command-palette.tsx
 msgid "Channels"
 msgstr "频道"
 
@@ -2182,7 +2176,6 @@ msgstr "已收费"
 msgid "Chart failed to render: {error}"
 msgstr "图表渲染失败：{error}"
 
-#: src/pages/home/HomeHero.tsx
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Chat"
 msgstr "聊天"
@@ -2190,6 +2183,10 @@ msgstr "聊天"
 #: src/pages/shell/composer-mentions.tsx
 msgid "Chat Settings"
 msgstr "聊天设置"
+
+#: src/pages/Settings.tsx
+msgid "ChatGPT or Claude"
+msgstr "ChatGPT 或 Claude"
 
 #: src/lib/localized-provider-hint.ts
 #: src/pages/usage/usage-sections.tsx
@@ -2508,18 +2505,9 @@ msgstr "复杂任务模型"
 msgid "Composio"
 msgstr "Composio"
 
-#: src/pages/shell/context-meter.tsx
-msgid "Compress context"
-msgstr "压缩上下文"
-
-#: src/pages/shell/context-meter.tsx
-msgid "Compressing…"
-msgstr "正在压缩…"
-
 #: src/pages/Onboarding.tsx
 #: src/pages/platform/PricingSection.tsx
 #: src/pages/platform/SimulatorSection.tsx
-#: src/pages/Settings.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Computer"
@@ -2684,6 +2672,10 @@ msgstr "连接一个应用"
 msgid "Connect API key"
 msgstr "连接 API 密钥"
 
+#: src/pages/model-settings/providers-section.tsx
+msgid "Connect ChatGPT or Claude"
+msgstr "连接 ChatGPT 或 Claude"
+
 #: src/pages/Store.tsx
 msgid "Connect Executor"
 msgstr "连接 Executor"
@@ -2777,10 +2769,6 @@ msgstr "连接器名称"
 #: src/pages/shell/import-status.ts
 msgid "Contains code to run"
 msgstr "包含可运行的代码"
-
-#: src/pages/shell/context-meter.tsx
-msgid "Context"
-msgstr "上下文"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
@@ -3365,7 +3353,6 @@ msgstr "无法运行例行任务"
 #: src/pages/platform/PartnersSection.tsx
 #: src/pages/shell/agent-audience.tsx
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/shell/chat-model-switcher.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/use-space-roster.ts
 #: src/pages/SpaceSettingsPanel.tsx
@@ -4217,7 +4204,6 @@ msgstr "还没有账户？"
 #: src/components/PlanCard.tsx
 #: src/lib/ticket-status.ts
 #: src/pages/ActivityList.tsx
-#: src/pages/HomePage.tsx
 #: src/pages/RoutineCard.tsx
 #: src/pages/RoutineTimeGrid.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
@@ -4696,10 +4682,6 @@ msgstr "筛选器"
 msgid "Finance"
 msgstr "财务"
 
-#: src/pages/home/HomeComposer.tsx
-msgid "Find an agent"
-msgstr "查找智能体"
-
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Find models"
@@ -4763,10 +4745,6 @@ msgstr "为 {forWhom}"
 #: src/pages/BotContextMenu.tsx
 msgid "For 1 hour"
 msgstr "1小时"
-
-#: src/pages/shell/composer-model-choice.tsx
-msgid "For this conversation"
-msgstr "用于此对话"
 
 #: src/components/PlanChoice.tsx
 msgid "For up to {count} people"
@@ -4893,11 +4871,6 @@ msgstr "允许以只读方式访问 {name}？"
 msgid "Give work"
 msgstr "分配工作"
 
-#: src/pages/shell/command-palette.tsx
-#: src/pages/shell/sidebar-team.tsx
-msgid "Go to…"
-msgstr "前往…"
-
 #: src/pages/shell/composer.tsx
 msgid "Goes to {recipient}"
 msgstr "将发送给 {recipient}"
@@ -4997,10 +4970,6 @@ msgstr "你好，这是我朗读回复时的声音。"
 msgid "Hi. I'm Rook. We'll set up your team in about two minutes."
 msgstr "你好。我是 Rook。大约两分钟就能搭好你的团队。"
 
-#: src/pages/home/HomeCard.tsx
-msgid "Hide {name}"
-msgstr "隐藏{name}"
-
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Hide from customers"
 msgstr "对客户隐藏"
@@ -5041,7 +5010,6 @@ msgstr "按住说话"
 msgid "Hold to talk, release to send"
 msgstr "按住说话，松开发送"
 
-#: src/pages/home/HomeHero.tsx
 #: src/pages/shell/embed-tabs.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Home"
@@ -5950,10 +5918,6 @@ msgstr "每次请求的最大图像数"
 msgid "Maximum output tokens"
 msgstr "最大输出 token 数"
 
-#: src/pages/Settings.tsx
-msgid "MCP"
-msgstr "MCP"
-
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "MCP endpoint"
 msgstr "MCP 端点"
@@ -6007,7 +5971,6 @@ msgstr "成员：{members}"
 #: src/pages/Settings.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/shell/sidebar-team.tsx
 msgid "Memory"
 msgstr "记忆"
 
@@ -6182,7 +6145,6 @@ msgid "Model options"
 msgstr "模型选项"
 
 #: src/pages/platform/SimulatorSection.tsx
-#: src/pages/Settings.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Models"
 msgstr "模型"
@@ -6293,14 +6255,6 @@ msgstr "下移 {0}"
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Move {0} up"
 msgstr "上移 {0}"
-
-#: src/pages/home/HomeCard.tsx
-msgid "Move {name} earlier"
-msgstr "将{name}前移"
-
-#: src/pages/home/HomeCard.tsx
-msgid "Move {name} later"
-msgstr "将{name}后移"
 
 #: src/pages/ModelRoleSettings.tsx
 msgid "Move down"
@@ -6580,10 +6534,6 @@ msgstr "无访问权限"
 msgid "No activity yet."
 msgstr "还没有活动。"
 
-#: src/pages/home/HomeComposer.tsx
-msgid "No agent found"
-msgstr "未找到智能体"
-
 #: src/pages/shell/routing-line.tsx
 msgid "No answer needed"
 msgstr "无需回复"
@@ -6721,7 +6671,6 @@ msgstr "未找到远程 MCP 服务器"
 
 #: src/pages/AgentsStore.tsx
 #: src/pages/model-settings/providers-section.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/SkillsStore.tsx
 #: src/pages/SpaceSearch.tsx
 #: src/pages/Store.tsx
@@ -6944,10 +6893,6 @@ msgstr "按计划"
 msgid "on day {day} at {time}"
 msgstr "{day}日 {time}"
 
-#: src/pages/home/HomeHero.tsx
-msgid "On open"
-msgstr "启动时"
-
 #: src/pages/platform/SimulatorSection.tsx
 msgid "On own models (%)"
 msgstr "使用自有模型(%)"
@@ -7160,10 +7105,6 @@ msgstr "组织 API 密钥"
 msgid "Organization ID"
 msgstr "组织 ID"
 
-#: src/pages/HomePage.tsx
-msgid "Organize"
-msgstr "整理"
-
 #: src/pages/shell/chat-context.tsx
 msgid "Original message unavailable"
 msgstr "原消息不可用"
@@ -7241,10 +7182,6 @@ msgstr "页面正文"
 msgid "PagerDuty incident"
 msgstr "PagerDuty 事件"
 
-#: src/pages/shell/command-palette.tsx
-msgid "Pages"
-msgstr "页面"
-
 #: src/pages/partner/PartnerInvoices.tsx
 #: src/pages/partner/PartnerPayments.tsx
 #: src/pages/partner/PartnerRevenue.tsx
@@ -7311,6 +7248,10 @@ msgstr "此服务器已关闭密码登录"
 #: src/pages/Auth.tsx
 msgid "Password updated"
 msgstr "密码已更新"
+
+#: src/pages/Settings.tsx
+msgid "Passwords and access"
+msgstr "密码与访问"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
@@ -7403,7 +7344,6 @@ msgstr "待处理"
 #: src/pages/Onboarding.tsx
 #: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/shell/channel-members.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/StoreCategoryChips.tsx
@@ -8384,7 +8324,6 @@ msgstr "例行任务流程"
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/embed-tabs.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Routines"
@@ -8614,7 +8553,6 @@ msgstr "屏幕未连接"
 #: src/pages/shell/channel-find.tsx
 #: src/pages/shell/channel-members.tsx
 #: src/pages/shell/chat-model-picker.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/shell-sidebar.tsx
 #: src/pages/shell/sidebar-header.tsx
 #: src/pages/Store.tsx
@@ -8639,10 +8577,6 @@ msgstr "搜索产物…"
 #: src/pages/Store.tsx
 msgid "Search by domain"
 msgstr "按域名搜索"
-
-#: src/pages/shell/command-palette.tsx
-msgid "Search channels, agents, people and pages"
-msgstr "搜索频道、智能体、成员和页面"
 
 #: src/pages/partner/PartnerCustomers.tsx
 msgid "Search customers"
@@ -9089,7 +9023,6 @@ msgid "Space"
 msgstr "工作区"
 
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/shell/chat-model-switcher.tsx
 msgid "Space default"
 msgstr "工作区默认"
 
@@ -9420,7 +9353,6 @@ msgid "Task settings"
 msgstr "任务设置"
 
 #: src/pages/Board.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/embed-tabs.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Tasks"
@@ -9441,8 +9373,6 @@ msgstr "正在示范，发送新消息前请先停止示范。"
 #: src/lib/plan-view.ts
 #: src/pages/Onboarding.tsx
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/shell/command-palette.tsx
-#: src/pages/shell/sidebar-team.tsx
 #: src/pages/TeamPage.tsx
 #: src/pages/VaultPage.tsx
 msgid "Team"
@@ -10243,7 +10173,6 @@ msgstr "URL"
 
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/Settings.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/Usage.tsx
 msgid "Usage"
@@ -10422,10 +10351,6 @@ msgstr "值"
 #: src/pages/shell/message-cards.tsx
 msgid "Variations"
 msgstr "变体"
-
-#: src/pages/Settings.tsx
-msgid "Vault"
-msgstr "保险库"
 
 #: src/pages/partner/PartnerDomain.tsx
 #: src/pages/platform/PartnersSection.tsx
@@ -10743,11 +10668,6 @@ msgstr "谁还没有确认？"
 msgid "Who sees this channel"
 msgstr "谁可以查看此频道"
 
-#: src/pages/HomePage.tsx
-msgid "Widget"
-msgstr "小组件"
-
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/WikiPage.tsx
 msgid "Wiki"

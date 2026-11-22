@@ -1,6 +1,6 @@
 import type { AppBootstrap, Bot, DirectPerson, NavPart, PresenceStatus } from "@corvo/contracts";
 import { NAV_PARTS } from "@corvo/contracts";
-import { Button, Kbd, Popover, PopoverContent, PopoverTrigger } from "@corvo/ui-web";
+import { Button, Popover, PopoverContent, PopoverTrigger } from "@corvo/ui-web";
 import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { skipToken, useQuery } from "@tanstack/react-query";
@@ -8,7 +8,6 @@ import type { LucideIcon } from "lucide-react";
 import {
   Activity,
   BookOpen,
-  Brain,
   CalendarClock,
   ChevronDown,
   FileText,
@@ -16,9 +15,7 @@ import {
   Home,
   Landmark,
   ListChecks,
-  Search,
   ShieldCheck,
-  Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
@@ -54,14 +51,11 @@ export function SidebarNav({
   more,
   pathname,
   onOpen,
-  onQuickSwitch,
 }: {
   items: readonly NavTarget[];
   more: readonly NavTarget[];
   pathname: string;
   onOpen: (to: string) => void;
-  /** Opens the quick switcher (Cmd/Ctrl-K). */
-  onQuickSwitch?: () => void;
 }) {
   const { t } = useLingui();
   const [moreOpen, setMoreOpen] = useState(false);
@@ -76,18 +70,6 @@ export function SidebarNav({
       data-testid="sidebar-nav"
       className="flex flex-col gap-px px-2.5 pb-2"
     >
-      {onQuickSwitch ? (
-        <button
-          type="button"
-          data-testid="sidebar-quick-switch"
-          onClick={onQuickSwitch}
-          className="mb-1.5 flex h-8 w-full items-center gap-2 rounded-md border border-sidebar-border bg-background/40 px-2 text-start text-nav text-muted-foreground outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <Search {...ICON} />
-          <span className="min-w-0 flex-1 truncate">{t`Go to…`}</span>
-          <Kbd>⌘K</Kbd>
-        </button>
-      ) : null}
       {items.map(({ key, label, to, icon: Icon, badge, isNew }) => (
         <button
           key={key}
@@ -190,14 +172,10 @@ export function usePartnerAccent(): void {
 /** The nav with what this account may see: its approvals waiting, the parts a mission has brought, and what a partner hides. */
 export function SidebarNavLive({
   ticketBoardEnabled,
-  embedded,
   onOpen,
-  onQuickSwitch,
 }: {
   ticketBoardEnabled: boolean;
-  embedded: boolean;
   onOpen: (to: string) => void;
-  onQuickSwitch?: () => void;
 }) {
   const { t } = useLingui();
   const { pathname } = useLocation();
@@ -230,7 +208,6 @@ export function SidebarNavLive({
       ? [target("routines", t`Routines`, "/app/routines", CalendarClock)]
       : []),
     { key: "activity", label: t`Activity`, to: "/app/activity", icon: Activity },
-    ...(visible("team") ? [target("team", t`Team`, "/app/team", Users)] : []),
   ];
   const more: NavTarget[] = [
     ...(visible("usage") ? [target("usage", t`Usage`, "/app/usage", Gauge)] : []),
@@ -238,20 +215,15 @@ export function SidebarNavLive({
       ? [target("artifacts", t`Artifacts`, "/app/artifacts", FileText)]
       : []),
     ...(visible("wiki") ? [target("wiki", t`Wiki`, "/app/wiki", BookOpen)] : []),
-    // Memory is an account setting, which a partner's frame does not offer.
     ...(operator
       ? [{ key: "platform", label: t`Platform`, to: "/app/platform/pricing", icon: Landmark }]
       : []),
-    ...(embedded || !visible("memory")
-      ? []
-      : [target("memory", t`Memory`, "/settings/memory", Brain)]),
   ];
   return (
     <SidebarNav
       items={items}
       more={more}
       pathname={pathname}
-      onQuickSwitch={onQuickSwitch}
       onOpen={(to) => {
         const part = [...items, ...more].find((item) => item.to === to)?.key;
         if (part && NAV_PARTS.includes(part as NavPart)) missions.open(part as NavPart);

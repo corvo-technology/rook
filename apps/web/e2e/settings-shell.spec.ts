@@ -96,6 +96,7 @@ test("settings shell is two-pane and deep-links Models Memory Voice Usage", asyn
   await expect(deleteAccount).toBeVisible();
   await captureScreenshot(page, testInfo, "settings-general-delete-account");
 
+  await settings.getByTestId("settings-nav-advanced").click();
   await settings.getByTestId("settings-nav-models").click();
   await expect(settings).toHaveAttribute("data-settings-section", "models");
   await expect(settings.getByTestId("model-settings")).toBeVisible();

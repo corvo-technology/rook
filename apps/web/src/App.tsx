@@ -27,7 +27,6 @@ import { SubscriptionGate } from "./components/SubscriptionGate";
 import { authClient } from "./lib/auth";
 import { getTicketBoardEnabled, subscribeTicketBoardEnabled } from "./lib/bootstrap";
 import { desktopBridge } from "./lib/desktop";
-import { readStartPage } from "./lib/home-prefs";
 import { identifyMonitoringUser } from "./lib/monitoring";
 import { markAfterPaint, markOnce } from "./lib/performance";
 import { importChunk, lazyComponent } from "./lib/preload-recovery";
@@ -197,17 +196,7 @@ function SessionApp() {
       <div className="h-full" data-corvo-app-state="ready">
         <Suspense fallback={<PageLoading />}>
           <Routes>
-            <Route
-              path="/"
-              element={
-                <Navigate
-                  to={
-                    user ? (readStartPage(user.id) === "chat" ? "/app" : "/app/home") : "/sign-in"
-                  }
-                  replace
-                />
-              }
-            />
+            <Route path="/" element={<Navigate to={user ? "/app/home" : "/sign-in"} replace />} />
             <Route
               path="/sign-in"
               element={

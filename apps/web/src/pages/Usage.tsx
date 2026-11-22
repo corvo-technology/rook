@@ -4,7 +4,7 @@ import { useLingui } from "@lingui/react/macro";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { PageHeader } from "../components/PageHeader";
-import { formatTokens } from "../lib/context-meter";
+import { formatTokens } from "../lib/format-tokens";
 import { useSpaceQueries } from "../lib/query";
 import {
   formatUsd,

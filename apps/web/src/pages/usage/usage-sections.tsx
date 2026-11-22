@@ -2,7 +2,7 @@ import type { UsageAccount, UsageCache, UsageFailureKind, UsageOverview } from "
 import { BotAvatar, Progress } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import { useState } from "react";
-import { formatTokens } from "../../lib/context-meter";
+import { formatTokens } from "../../lib/format-tokens";
 import {
   formatUsd,
   usageAgentKey,

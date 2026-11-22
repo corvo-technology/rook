@@ -250,7 +250,7 @@ export const APP_MAP_SCREENS: readonly AppMapEntry[] = [
     "member",
     ALL,
     {
-      title: "Models",
+      title: "AI models",
       description: "Connect an AI provider or subscription and choose the models agents use.",
       keywords: [
         "model",
@@ -267,7 +267,7 @@ export const APP_MAP_SCREENS: readonly AppMapEntry[] = [
       ],
     },
     {
-      title: "Modelos",
+      title: "Modelos de IA",
       description: "Conecte um provedor ou assinatura de IA e escolha os modelos dos agentes.",
       keywords: [
         "modelo",
@@ -282,6 +282,23 @@ export const APP_MAP_SCREENS: readonly AppMapEntry[] = [
         "ollama",
         "assinatura",
       ],
+    },
+  ),
+  screen(
+    "settings-ai-account",
+    "/settings/ai-account",
+    "member",
+    ALL,
+    {
+      title: "ChatGPT or Claude",
+      description: "Connect your ChatGPT or Claude subscription or key so agents can use it.",
+      keywords: ["chatgpt", "claude", "subscription", "connect"],
+    },
+    {
+      title: "ChatGPT ou Claude",
+      description:
+        "Conecte sua assinatura ou chave do ChatGPT ou do Claude para os agentes usarem.",
+      keywords: ["chatgpt", "claude", "assinatura", "conectar"],
     },
   ),
   screen(
@@ -429,13 +446,13 @@ export const APP_MAP_SCREENS: readonly AppMapEntry[] = [
     "member",
     ALL,
     {
-      title: "MCP",
+      title: "Access from other apps",
       description:
         "Make keys that let Claude Code, Codex, Cursor or another MCP client talk to your agents, and revoke them.",
       keywords: ["mcp", "claude code", "codex", "cursor"],
     },
     {
-      title: "MCP",
+      title: "Acesso por outros apps",
       description:
         "Crie chaves para o Claude Code, Codex, Cursor ou outro cliente MCP conversar com seus agentes, e revogue-as.",
       keywords: ["mcp", "claude code", "codex", "cursor"],
@@ -447,13 +464,13 @@ export const APP_MAP_SCREENS: readonly AppMapEntry[] = [
     "member",
     ALL,
     {
-      title: "Vault",
+      title: "Passwords and access",
       description:
         "Every saved credential in one place: which agents can use it, and when it was last used.",
       keywords: ["credential", "api key", "secret", "password", "login", "token", "access"],
     },
     {
-      title: "Cofre",
+      title: "Senhas e acessos",
       description:
         "Todas as credenciais salvas em um só lugar: quais agentes podem usar cada uma e quando foi usada pela última vez.",
       keywords: ["credencial", "chave de api", "segredo", "senha", "login", "token", "acesso"],
@@ -465,12 +482,12 @@ export const APP_MAP_SCREENS: readonly AppMapEntry[] = [
     "owner",
     COMPUTER,
     {
-      title: "Computer",
+      title: "Agent computers",
       description: "The sandbox or computer agents use to browse, run code and handle files.",
       keywords: ["sandbox", "browser", "vm", "desktop", "shell", "code", "provider"],
     },
     {
-      title: "Computador",
+      title: "Computadores dos agentes",
       description:
         "O sandbox ou computador que os agentes usam para navegar, rodar código e lidar com arquivos.",
       keywords: ["sandbox", "navegador", "vm", "área de trabalho", "terminal", "código"],

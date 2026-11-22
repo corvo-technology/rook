@@ -484,10 +484,6 @@ msgstr "{peopleUsed} von {peopleMax}"
 msgid "{percent}% used"
 msgstr "{percent}% verbraucht"
 
-#: src/pages/shell/context-meter.tsx
-msgid "{percent}% used · {used} of {windowLabel} tokens"
-msgstr "{percent} % genutzt · {used} von {windowLabel} Tokens"
-
 #: src/pages/shell/message-versions.tsx
 msgid "{position} of {count}"
 msgstr "{position} von {count}"
@@ -722,10 +718,6 @@ msgstr "{used} von {limit}"
 msgid "{used} of {limit} tokens"
 msgstr "{used} von {limit} Tokens"
 
-#: src/pages/shell/context-meter.tsx
-msgid "{used} tokens"
-msgstr "{used} Tokens"
-
 #: src/pages/VaultPage.tsx
 msgid "{variable} is reserved and cannot be used as a command variable. Choose another name."
 msgstr "{variable} ist reserviert und kann nicht als Befehlsvariable verwendet werden. Wähle einen anderen Namen."
@@ -833,6 +825,10 @@ msgstr "Zugriff für {0}"
 msgid "Access for {forBotName}"
 msgstr "Zugriff für {forBotName}"
 
+#: src/pages/Settings.tsx
+msgid "Access from other apps"
+msgstr "Zugriff durch andere Apps"
+
 #: src/pages/connections/McpServerForm.tsx
 msgid "Access token (optional)"
 msgstr "Zugriffstoken (optional)"
@@ -898,7 +894,6 @@ msgstr "Aktive Kunden"
 
 #: src/components/InboxPanel.tsx
 #: src/pages/ActivityPage.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-header.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Activity"
@@ -1138,10 +1133,6 @@ msgstr "Treg hinzufügen"
 msgid "Add trigger"
 msgstr "Auslöser hinzufügen"
 
-#: src/pages/HomePage.tsx
-msgid "Add widget"
-msgstr "Widget hinzufügen"
-
 #: src/pages/partner/PartnerDomain.tsx
 msgid "Add your terms and privacy links in Brand to go live."
 msgstr "Fügen Sie unter Marke Ihre Links zu Nutzungsbedingungen und Datenschutz hinzu, um live zu gehen."
@@ -1226,7 +1217,6 @@ msgstr "Agentur"
 
 #: src/components/WorkingLine.tsx
 #: src/pages/AddStepPanel.tsx
-#: src/pages/home/HomeComposer.tsx
 #: src/pages/NewRoutinePanel.tsx
 #: src/pages/WhatsAppNumbers.tsx
 msgid "Agent"
@@ -1235,6 +1225,10 @@ msgstr "Agent"
 #: src/pages/shell/chat-header.tsx
 msgid "Agent computer"
 msgstr "Agent-Computer"
+
+#: src/pages/Settings.tsx
+msgid "Agent computers"
+msgstr "Computer der Agenten"
 
 #: src/pages/partner/PartnerConsolePage.tsx
 msgid "Agent model"
@@ -1246,7 +1240,6 @@ msgstr "Agentenmodell"
 #: src/pages/partner/PartnerTemplatePanel.tsx
 #: src/pages/Shell.tsx
 #: src/pages/shell/channel-members.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/embed-tabs.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/Store.tsx
@@ -1262,6 +1255,10 @@ msgstr "Agenten sind pausiert"
 #: src/pages/AppAgentAccess.tsx
 msgid "Agents that can use it"
 msgstr "Agenten, die es nutzen können"
+
+#: src/pages/Settings.tsx
+msgid "AI models"
+msgstr "KI-Modelle"
 
 #: src/components/ModelCredits.tsx
 #: src/components/PlanChoice.tsx
@@ -1564,7 +1561,6 @@ msgstr "Freigabemodell"
 
 #: src/pages/ApprovalsPage.tsx
 #: src/pages/Settings.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Approvals"
@@ -1637,7 +1633,6 @@ msgstr "Argumente"
 
 #: src/pages/Artifacts.tsx
 #: src/pages/PartnerTemplateEditor.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Artifacts"
 msgstr "Artefakte"
@@ -2174,7 +2169,6 @@ msgstr "Wird geändert…"
 
 #: src/pages/onboarding/OnboardingPreview.tsx
 #: src/pages/Shell.tsx
-#: src/pages/shell/command-palette.tsx
 msgid "Channels"
 msgstr "Kanäle"
 
@@ -2190,7 +2184,6 @@ msgstr "Berechnet"
 msgid "Chart failed to render: {error}"
 msgstr "Diagramm konnte nicht angezeigt werden: {error}"
 
-#: src/pages/home/HomeHero.tsx
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Chat"
 msgstr "Chat"
@@ -2198,6 +2191,10 @@ msgstr "Chat"
 #: src/pages/shell/composer-mentions.tsx
 msgid "Chat Settings"
 msgstr "Chat-Einstellungen"
+
+#: src/pages/Settings.tsx
+msgid "ChatGPT or Claude"
+msgstr "ChatGPT oder Claude"
 
 #: src/lib/localized-provider-hint.ts
 #: src/pages/usage/usage-sections.tsx
@@ -2521,18 +2518,9 @@ msgstr "Modell für komplexe Aufgaben"
 msgid "Composio"
 msgstr "Composio"
 
-#: src/pages/shell/context-meter.tsx
-msgid "Compress context"
-msgstr "Kontext komprimieren"
-
-#: src/pages/shell/context-meter.tsx
-msgid "Compressing…"
-msgstr "Wird komprimiert…"
-
 #: src/pages/Onboarding.tsx
 #: src/pages/platform/PricingSection.tsx
 #: src/pages/platform/SimulatorSection.tsx
-#: src/pages/Settings.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Computer"
@@ -2698,6 +2686,10 @@ msgstr "Eine App verbinden"
 msgid "Connect API key"
 msgstr "API-Schlüssel verbinden"
 
+#: src/pages/model-settings/providers-section.tsx
+msgid "Connect ChatGPT or Claude"
+msgstr "ChatGPT oder Claude verbinden"
+
 #: src/pages/Store.tsx
 msgid "Connect Executor"
 msgstr "Executor verbinden"
@@ -2791,10 +2783,6 @@ msgstr "Connector-Name"
 #: src/pages/shell/import-status.ts
 msgid "Contains code to run"
 msgstr "Enthält ausführbaren Code"
-
-#: src/pages/shell/context-meter.tsx
-msgid "Context"
-msgstr "Kontext"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
@@ -3384,7 +3372,6 @@ msgstr "Die Routine konnte nicht ausgeführt werden"
 #: src/pages/platform/PartnersSection.tsx
 #: src/pages/shell/agent-audience.tsx
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/shell/chat-model-switcher.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/use-space-roster.ts
 #: src/pages/SpaceSettingsPanel.tsx
@@ -4236,7 +4223,6 @@ msgstr "Du hast noch kein Konto?"
 #: src/components/PlanCard.tsx
 #: src/lib/ticket-status.ts
 #: src/pages/ActivityList.tsx
-#: src/pages/HomePage.tsx
 #: src/pages/RoutineCard.tsx
 #: src/pages/RoutineTimeGrid.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
@@ -4715,10 +4701,6 @@ msgstr "Filter"
 msgid "Finance"
 msgstr "Finanzen"
 
-#: src/pages/home/HomeComposer.tsx
-msgid "Find an agent"
-msgstr "Agent suchen"
-
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Find models"
@@ -4782,10 +4764,6 @@ msgstr "für {forWhom}"
 #: src/pages/BotContextMenu.tsx
 msgid "For 1 hour"
 msgstr "Für 1 Stunde"
-
-#: src/pages/shell/composer-model-choice.tsx
-msgid "For this conversation"
-msgstr "Für diese Unterhaltung"
 
 #: src/components/PlanChoice.tsx
 msgid "For up to {count} people"
@@ -4916,11 +4894,6 @@ msgstr "Lesezugriff auf {name} geben?"
 msgid "Give work"
 msgstr "Arbeit geben"
 
-#: src/pages/shell/command-palette.tsx
-#: src/pages/shell/sidebar-team.tsx
-msgid "Go to…"
-msgstr "Gehe zu…"
-
 #: src/pages/shell/composer.tsx
 msgid "Goes to {recipient}"
 msgstr "Geht an {recipient}"
@@ -5020,10 +4993,6 @@ msgstr "Hallo, so klinge ich, wenn ich Antworten vorlese."
 msgid "Hi. I'm Rook. We'll set up your team in about two minutes."
 msgstr "Hallo. Ich bin Rook. In etwa zwei Minuten richten wir dein Team ein."
 
-#: src/pages/home/HomeCard.tsx
-msgid "Hide {name}"
-msgstr "{name} ausblenden"
-
 #: src/pages/PartnerTemplateEditor.tsx
 msgid "Hide from customers"
 msgstr "Für Kunden ausblenden"
@@ -5064,7 +5033,6 @@ msgstr "Zum Sprechen gedrückt halten"
 msgid "Hold to talk, release to send"
 msgstr "Zum Sprechen halten, zum Senden loslassen"
 
-#: src/pages/home/HomeHero.tsx
 #: src/pages/shell/embed-tabs.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Home"
@@ -5974,10 +5942,6 @@ msgstr "Maximale Bilder pro Anfrage"
 msgid "Maximum output tokens"
 msgstr "Maximale Ausgabetokens"
 
-#: src/pages/Settings.tsx
-msgid "MCP"
-msgstr "MCP"
-
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "MCP endpoint"
 msgstr "MCP-Endpunkt"
@@ -6031,7 +5995,6 @@ msgstr "Mitglieder: {members}"
 #: src/pages/Settings.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/shell/sidebar-team.tsx
 msgid "Memory"
 msgstr "Erinnerungen"
 
@@ -6206,7 +6169,6 @@ msgid "Model options"
 msgstr "Modelloptionen"
 
 #: src/pages/platform/SimulatorSection.tsx
-#: src/pages/Settings.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Models"
 msgstr "Modelle"
@@ -6317,14 +6279,6 @@ msgstr "{0} nach unten"
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Move {0} up"
 msgstr "{0} nach oben"
-
-#: src/pages/home/HomeCard.tsx
-msgid "Move {name} earlier"
-msgstr "{name} nach vorn verschieben"
-
-#: src/pages/home/HomeCard.tsx
-msgid "Move {name} later"
-msgstr "{name} nach hinten verschieben"
 
 #: src/pages/ModelRoleSettings.tsx
 msgid "Move down"
@@ -6605,10 +6559,6 @@ msgstr "Kein Zugriff"
 msgid "No activity yet."
 msgstr "Noch keine Aktivität."
 
-#: src/pages/home/HomeComposer.tsx
-msgid "No agent found"
-msgstr "Kein Agent gefunden"
-
 #: src/pages/shell/routing-line.tsx
 msgid "No answer needed"
 msgstr "Keine Antwort nötig"
@@ -6746,7 +6696,6 @@ msgstr "Keine Remote-MCP-Server gefunden"
 
 #: src/pages/AgentsStore.tsx
 #: src/pages/model-settings/providers-section.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/SkillsStore.tsx
 #: src/pages/SpaceSearch.tsx
 #: src/pages/Store.tsx
@@ -6970,10 +6919,6 @@ msgstr "Nach Zeitplan"
 msgid "on day {day} at {time}"
 msgstr "am {day}. um {time}"
 
-#: src/pages/home/HomeHero.tsx
-msgid "On open"
-msgstr "Beim Öffnen"
-
 #: src/pages/platform/SimulatorSection.tsx
 msgid "On own models (%)"
 msgstr "Auf eigenen Modellen (%)"
@@ -7186,10 +7131,6 @@ msgstr "Organisations-API-Schlüssel"
 msgid "Organization ID"
 msgstr "Organisations-ID"
 
-#: src/pages/HomePage.tsx
-msgid "Organize"
-msgstr "Anordnen"
-
 #: src/pages/shell/chat-context.tsx
 msgid "Original message unavailable"
 msgstr "Originalnachricht nicht verfügbar"
@@ -7267,10 +7208,6 @@ msgstr "Seitentext"
 msgid "PagerDuty incident"
 msgstr "PagerDuty-Vorfall"
 
-#: src/pages/shell/command-palette.tsx
-msgid "Pages"
-msgstr "Seiten"
-
 #: src/pages/partner/PartnerInvoices.tsx
 #: src/pages/partner/PartnerPayments.tsx
 #: src/pages/partner/PartnerRevenue.tsx
@@ -7337,6 +7274,10 @@ msgstr "Die Anmeldung mit Passwort ist auf diesem Server deaktiviert"
 #: src/pages/Auth.tsx
 msgid "Password updated"
 msgstr "Passwort aktualisiert"
+
+#: src/pages/Settings.tsx
+msgid "Passwords and access"
+msgstr "Passwörter und Zugänge"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
@@ -7433,7 +7374,6 @@ msgstr "Ausstehend"
 #: src/pages/Onboarding.tsx
 #: src/pages/partner/PartnerCustomers.tsx
 #: src/pages/shell/channel-members.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/SpaceRolesSettings.tsx
 #: src/pages/StoreCategoryChips.tsx
@@ -8417,7 +8357,6 @@ msgstr "Abläufe der Routinen"
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/agent-import.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/embed-tabs.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Routines"
@@ -8647,7 +8586,6 @@ msgstr "Bildschirm nicht verbunden"
 #: src/pages/shell/channel-find.tsx
 #: src/pages/shell/channel-members.tsx
 #: src/pages/shell/chat-model-picker.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/shell-sidebar.tsx
 #: src/pages/shell/sidebar-header.tsx
 #: src/pages/Store.tsx
@@ -8672,10 +8610,6 @@ msgstr "Artefakte durchsuchen …"
 #: src/pages/Store.tsx
 msgid "Search by domain"
 msgstr "Nach Domain suchen"
-
-#: src/pages/shell/command-palette.tsx
-msgid "Search channels, agents, people and pages"
-msgstr "Kanäle, Agenten, Personen und Seiten suchen"
 
 #: src/pages/partner/PartnerCustomers.tsx
 msgid "Search customers"
@@ -9123,7 +9057,6 @@ msgid "Space"
 msgstr "Bereich"
 
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/shell/chat-model-switcher.tsx
 msgid "Space default"
 msgstr "Space-Standard"
 
@@ -9454,7 +9387,6 @@ msgid "Task settings"
 msgstr "Aufgaben-Einstellungen"
 
 #: src/pages/Board.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/embed-tabs.tsx
 #: src/pages/shell/sidebar-team.tsx
 msgid "Tasks"
@@ -9475,8 +9407,6 @@ msgstr "Aufgabe wird angelernt. Beende das Anlernen, bevor du eine neue Nachrich
 #: src/lib/plan-view.ts
 #: src/pages/Onboarding.tsx
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/shell/command-palette.tsx
-#: src/pages/shell/sidebar-team.tsx
 #: src/pages/TeamPage.tsx
 #: src/pages/VaultPage.tsx
 msgid "Team"
@@ -10285,7 +10215,6 @@ msgstr "URL"
 
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/Settings.tsx
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/Usage.tsx
 msgid "Usage"
@@ -10464,10 +10393,6 @@ msgstr "Wert"
 #: src/pages/shell/message-cards.tsx
 msgid "Variations"
 msgstr "Variationen"
-
-#: src/pages/Settings.tsx
-msgid "Vault"
-msgstr "Tresor"
 
 #: src/pages/partner/PartnerDomain.tsx
 #: src/pages/platform/PartnersSection.tsx
@@ -10786,11 +10711,6 @@ msgstr "Wer hat noch nicht bestätigt?"
 msgid "Who sees this channel"
 msgstr "Wer diesen Kanal sieht"
 
-#: src/pages/HomePage.tsx
-msgid "Widget"
-msgstr "Widget"
-
-#: src/pages/shell/command-palette.tsx
 #: src/pages/shell/sidebar-team.tsx
 #: src/pages/WikiPage.tsx
 msgid "Wiki"

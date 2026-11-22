@@ -26,7 +26,7 @@ import {
 import { BotAvatar, Button } from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
 import { ArrowUp, Box, Paperclip, Plus, Settings, Square, X } from "lucide-react";
-import type { ClipboardEvent, DragEvent, ReactNode, RefObject } from "react";
+import type { ClipboardEvent, DragEvent, RefObject } from "react";
 import { memo, useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   HoldToTalkControls,
@@ -105,7 +105,6 @@ export const Composer = memo(function Composer({
   draftKey,
   enterToSend,
   onImportAgent,
-  modelControl,
   credentialBotId,
 }: {
   activeName?: string;
@@ -162,7 +161,6 @@ export const Composer = memo(function Composer({
   /** When set, a dropped OpenClaw or Hermes folder or backup offers Import or Attach. */
   onImportAgent?: (agent: AgentImportReader) => void;
   /** The model picker for the next message; only an agent's own chat has one. */
-  modelControl?: ReactNode;
   /** The agent a pasted key is saved for; in a group, the one member the message would reach. */
   credentialBotId?: string;
 }) {
@@ -943,7 +941,6 @@ export const Composer = memo(function Composer({
             expanded ? "row-start-2" : ""
           }`}
         >
-          {talk.recording?.locked ? null : modelControl}
           {talk.recording?.locked ? (
             <HoldToTalkControls talk={talk} />
           ) : running ? (

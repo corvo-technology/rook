@@ -18,7 +18,6 @@ import {
   ListChecks,
   Monitor,
   ShieldCheck,
-  Users,
   Workflow,
 } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
@@ -280,14 +279,12 @@ function Canvas() {
             { key: "tasks", label: "Tasks", to: "/app/board", icon: ListChecks },
             { key: "routines", label: "Routines", to: "/app/routines", icon: CalendarClock },
             { key: "activity", label: "Activity", to: "/app/activity", icon: Activity },
-            { key: "team", label: "Team", to: "/app/team", icon: Users },
           ]}
           more={[
             { key: "workflows", label: "Routine flows", to: "/app/workflows", icon: Workflow },
           ]}
           pathname={agentView ? "/app/chief" : "/app/team"}
           onOpen={noop}
-          onQuickSwitch={noop}
         />
         <div className="flex flex-col gap-0.5 px-2.5">
           <SidebarRoster

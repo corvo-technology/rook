@@ -55,3 +55,33 @@ it("goes back on Esc, except while typing or with a menu open", async () => {
   expect(onBack).toHaveBeenCalledTimes(1);
   await view.cleanup();
 });
+
+it("keeps advanced sections in a group that starts closed and remembers it was opened", async () => {
+  window.localStorage.removeItem("corvo:settings-advanced-open");
+  const grouped = [...sections, { id: "models", label: "Models", advanced: true }];
+  const render = () =>
+    mount(
+      <SettingsLayout
+        title="Settings"
+        onBack={vi.fn()}
+        sections={grouped}
+        activeId="general"
+        onSelect={vi.fn()}
+        advancedLabel="Advanced"
+      >
+        content
+      </SettingsLayout>,
+    );
+  const first = await render();
+  const toggle = () =>
+    first.host.querySelector<HTMLElement>('[data-testid="settings-nav-advanced"]');
+  expect(toggle()?.getAttribute("aria-expanded")).toBe("false");
+  expect(first.host.querySelector('[data-testid="settings-nav-models"]')).toBeNull();
+  await act(async () => toggle()?.click());
+  expect(first.host.querySelector('[data-testid="settings-nav-models"]')).not.toBeNull();
+  await first.cleanup();
+  const second = await render();
+  expect(second.host.querySelector('[data-testid="settings-nav-models"]')).not.toBeNull();
+  await second.cleanup();
+  window.localStorage.removeItem("corvo:settings-advanced-open");
+});

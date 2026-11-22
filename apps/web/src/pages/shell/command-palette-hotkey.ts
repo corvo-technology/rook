@@ -4,10 +4,6 @@ function isCommandChord(event: KeyboardEvent, key: string) {
   return event.key.toLowerCase() === key;
 }
 
-export function isCommandPaletteHotkey(event: KeyboardEvent) {
-  return isCommandChord(event, "k");
-}
-
 /** Browsers reserve Cmd/Ctrl-N for a new window, so this only reaches the desktop app. */
 export function isCreateMenuHotkey(event: KeyboardEvent) {
   return isCommandChord(event, "n");

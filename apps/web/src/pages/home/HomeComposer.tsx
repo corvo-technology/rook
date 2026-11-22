@@ -1,26 +1,11 @@
 import type { Bot } from "@corvo/contracts";
-import {
-  BotAvatar,
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@corvo/ui-web";
 import { useLingui } from "@lingui/react/macro";
-import { ArrowUp, ChevronDown } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 import type { Ref } from "react";
-import { useState } from "react";
 
-/** The prompt of the page: pick an agent in an inline chip, type, send with Enter. */
+/** The prompt of the page: type, send with Enter. It always goes to the Chief, who hands the work on. */
 export function HomeComposer({
-  bots,
   target,
-  onTarget,
   text,
   onText,
   sending,
@@ -29,9 +14,7 @@ export function HomeComposer({
   inputRef,
   suggestions = true,
 }: {
-  bots: readonly Bot[];
   target: Bot;
-  onTarget: (id: string) => void;
   text: string;
   onText: (text: string) => void;
   sending: boolean;
@@ -42,7 +25,6 @@ export function HomeComposer({
   suggestions?: boolean;
 }) {
   const { t } = useLingui();
-  const [open, setOpen] = useState(false);
   const agentName = target.name;
   const ready = text.trim().length > 0 && !sending;
   return (
@@ -55,42 +37,6 @@ export function HomeComposer({
           onSend();
         }}
       >
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger
-            aria-label={t`Agent`}
-            disabled={bots.length < 2}
-            className="rk-home-lift flex h-9 w-fit shrink-0 items-center gap-2 rounded-full border border-border bg-background ps-1.5 pe-3 text-sm font-medium outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none"
-          >
-            <BotAvatar color={target.color} identity={target.id} size={24} />
-            <span className="max-w-40 truncate">{agentName}</span>
-            {bots.length > 1 ? (
-              <ChevronDown aria-hidden className="size-3.5 text-muted-foreground" />
-            ) : null}
-          </PopoverTrigger>
-          <PopoverContent align="start" className="w-64 p-0">
-            <Command>
-              <CommandInput placeholder={t`Find an agent`} />
-              <CommandList>
-                <CommandEmpty>{t`No agent found`}</CommandEmpty>
-                <CommandGroup>
-                  {bots.map((bot) => (
-                    <CommandItem
-                      key={bot.id}
-                      value={`${bot.name} ${bot.id}`}
-                      onSelect={() => {
-                        onTarget(bot.id);
-                        setOpen(false);
-                      }}
-                    >
-                      <BotAvatar color={bot.color} identity={bot.id} size={20} />
-                      <span className="truncate">{bot.name}</span>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
         <div className="flex items-end gap-2">
           <textarea
             ref={inputRef}

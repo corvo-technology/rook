@@ -44,7 +44,7 @@ beforeEach(() => {
 });
 
 async function renderNav(
-  props: { ticketBoardEnabled?: boolean; embedded?: boolean; path?: string } = {},
+  props: { ticketBoardEnabled?: boolean; path?: string } = {},
   onOpen = vi.fn(),
 ) {
   const container = document.createElement("div");
@@ -54,11 +54,7 @@ async function renderNav(
     root.render(
       <QueryClientProvider client={queryClient}>
         <MemoryRouter initialEntries={[props.path ?? "/app"]}>
-          <SidebarNavLive
-            ticketBoardEnabled={props.ticketBoardEnabled ?? true}
-            embedded={props.embedded ?? false}
-            onOpen={onOpen}
-          />
+          <SidebarNavLive ticketBoardEnabled={props.ticketBoardEnabled ?? true} onOpen={onOpen} />
         </MemoryRouter>
       </QueryClientProvider>,
     ),
@@ -67,9 +63,7 @@ async function renderNav(
     await new Promise((resolve) => setTimeout(resolve, 0));
   });
   const labels = () =>
-    [...container.querySelectorAll("nav button:not([data-testid=sidebar-quick-switch])")].map(
-      (button) => button.textContent,
-    );
+    [...container.querySelectorAll("nav button")].map((button) => button.textContent);
   const more = async () => {
     await act(async () =>
       container.querySelector<HTMLButtonElement>('[data-testid="sidebar-more"]')!.click(),
@@ -91,8 +85,8 @@ async function renderNav(
 
 it("lists every place once, with the rest behind More", async () => {
   const { labels, more, cleanup } = await renderNav();
-  expect(labels()).toEqual(["Home", "Approvals", "Tasks", "Routines", "Activity", "Team", "More"]);
-  expect(await more()).toEqual(["Usage", "Artifacts", "Wiki", "Memory"]);
+  expect(labels()).toEqual(["Home", "Approvals", "Tasks", "Routines", "Activity", "More"]);
+  expect(await more()).toEqual(["Usage", "Artifacts", "Wiki"]);
   await cleanup();
 });
 
@@ -134,40 +128,12 @@ it("lists Tasks even before a mission brings it, unless a partner hides it", asy
 it("gives each place an icon and opens More as a menu", async () => {
   const { container, cleanup } = await renderNav();
   for (const button of container.querySelectorAll("nav button:not([data-testid=sidebar-more])")) {
-    if (button.getAttribute("data-testid") === "sidebar-quick-switch") continue;
     expect(button.querySelector("svg")).not.toBeNull();
   }
   expect(
     container.querySelector('[data-testid="sidebar-more"]')?.getAttribute("aria-haspopup"),
   ).toBe("menu");
   await cleanup();
-});
-
-it("opens the quick switcher from the field above the places", async () => {
-  const onQuickSwitch = vi.fn();
-  const container = document.createElement("div");
-  document.body.append(container);
-  const root = createRoot(container);
-  await act(async () =>
-    root.render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
-          <SidebarNavLive
-            ticketBoardEnabled
-            embedded={false}
-            onOpen={vi.fn()}
-            onQuickSwitch={onQuickSwitch}
-          />
-        </MemoryRouter>
-      </QueryClientProvider>,
-    ),
-  );
-  await act(async () =>
-    container.querySelector<HTMLButtonElement>('[data-testid="sidebar-quick-switch"]')!.click(),
-  );
-  expect(onQuickSwitch).toHaveBeenCalledOnce();
-  await act(async () => root.unmount());
-  container.remove();
 });
 
 it("opens Home on the home page, not on a chat", async () => {
@@ -202,9 +168,11 @@ it("marks the open page, in the nav or behind More", async () => {
   await wiki.cleanup();
 });
 
-it("keeps account settings out of a partner's frame", async () => {
-  const { more, cleanup } = await renderNav({ embedded: true });
-  expect(await more()).toEqual(["Usage", "Artifacts", "Wiki"]);
+it("has no quick-switch field and no Team or Memory entry", async () => {
+  const { container, labels, more, cleanup } = await renderNav();
+  expect(container.querySelector('[data-testid="sidebar-quick-switch"]')).toBeNull();
+  expect(labels()).not.toContain("Team");
+  expect(await more()).not.toContain("Memory");
   await cleanup();
 });
 
@@ -214,7 +182,7 @@ it("leaves out what a partner hides from its customers", async () => {
   });
   const { labels, more, cleanup } = await renderNav();
   expect(labels()).not.toContain("Routines");
-  expect(await more()).toEqual(["Artifacts", "Wiki", "Memory"]);
+  expect(await more()).toEqual(["Artifacts", "Wiki"]);
   await cleanup();
 });
 

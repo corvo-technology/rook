@@ -1,5 +1,5 @@
 import type { Bot, BotSection, Group, Me, Space, ThreadSnapshot } from "@corvo/contracts";
-import { CHIEF_BOT_SPAWN_KEY } from "@corvo/core";
+import { botRole, CHIEF_BOT_SPAWN_KEY } from "@corvo/core";
 import {
   BotAvatar,
   Button,
@@ -96,7 +96,7 @@ export function SidebarRoster({
   botMenuContent: ReactNode;
   mini?: boolean;
 }) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   useFlipRows();
   return (
     <>
@@ -295,7 +295,7 @@ export function SidebarRoster({
                   : (workStatusLabel ??
                     attentionLabel ??
                     (item.kind === "bot"
-                      ? item.chat.title
+                      ? botRole(item.chat, i18n.locale)
                         ? "" // the role pill already shows the title
                         : approvalTextLabel(item.chat.preview)
                       : approvalTextLabel(item.chat.preview) ||
@@ -526,12 +526,12 @@ export function SidebarRoster({
                             />
                           </div>
                         </div>
-                        {item.kind === "bot" && item.chat.title ? (
+                        {item.kind === "bot" && botRole(item.chat, i18n.locale) ? (
                           <span
                             data-roster-role=""
                             className="mt-0.5 inline-block max-w-full truncate rounded-full bg-foreground/6 px-2 py-px text-meta font-medium text-foreground/65"
                           >
-                            {item.chat.title}
+                            {botRole(item.chat, i18n.locale)}
                           </span>
                         ) : null}
                         {compact ? (

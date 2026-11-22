@@ -155,14 +155,6 @@ describe("the map does not drift from the app", () => {
     expect(sections.filter((id) => !mapPaths.has(`/settings/${id}`))).toEqual([]);
   });
 
-  it("has an entry for every command palette page", () => {
-    const pages = [
-      ...read("apps/web/src/pages/shell/command-palette.tsx").matchAll(/\{ to: "([^"]+)"/g),
-    ].map((match) => match[1] as string);
-    expect(pages.length).toBeGreaterThan(5);
-    expect(pages.filter((path) => !mapPaths.has(path))).toEqual([]);
-  });
-
   it("has no entry for a screen that no longer exists", () => {
     const routes = [...read("apps/web/src/App.tsx").matchAll(/<Route[^>]*?path="([^"]+)"/gs)].map(
       (match) => stripParams(match[1] as string),

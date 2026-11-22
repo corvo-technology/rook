@@ -16,6 +16,7 @@ import {
   Plug,
   Settings,
   ShieldCheck,
+  Sparkles,
   SquareTerminal,
   Users,
   Volume2,
@@ -231,7 +232,7 @@ export function SettingsPage() {
     navigation.select("general");
   }
 
-  const sections: PageSection[] = [
+  const sectionList: PageSection[] = [
     {
       id: "general",
       label: t`General`,
@@ -288,9 +289,16 @@ export function SettingsPage() {
     },
     {
       id: "models",
-      label: t`Models`,
+      label: t`AI models`,
       icon: Cpu,
+      advanced: true,
       content: <ModelSettingsOverlay scope="account" />,
+    },
+    {
+      id: "ai-account",
+      label: t`ChatGPT or Claude`,
+      icon: Sparkles,
+      content: <ModelSettingsOverlay scope="account" simple />,
     },
     {
       id: "voice",
@@ -308,6 +316,7 @@ export function SettingsPage() {
       id: "memory",
       label: t`Memory`,
       icon: Brain,
+      advanced: true,
       content: (
         <MemorySettingsOverlay
           config={memoryConfig}
@@ -377,22 +386,25 @@ export function SettingsPage() {
     },
     {
       id: "mcp-access",
-      label: t`MCP`,
+      label: t`Access from other apps`,
       icon: SquareTerminal,
+      advanced: true,
       content: <McpSettings spaces={spaces} />,
     },
     {
       id: "vault",
-      label: t`Vault`,
+      label: t`Passwords and access`,
       icon: KeyRound,
+      advanced: true,
       content: <VaultPage />,
     },
     ...(showComputer
       ? [
           {
             id: "computer",
-            label: t`Computer`,
+            label: t`Agent computers`,
             icon: Monitor,
+            advanced: true,
             content: (
               <ComputerSettingsPanel
                 sandboxProvider={sandboxProvider}
@@ -424,10 +436,17 @@ export function SettingsPage() {
             id: "updates",
             label: t`Updates`,
             icon: CloudDownload,
+            advanced: true,
             content: <UpdatesSettingsPanel />,
           },
         ]
       : []),
+  ];
+
+  // Advanced sections keep their place in the list; the nav groups them at the bottom.
+  const sections = [
+    ...sectionList.filter((section) => !section.advanced),
+    ...sectionList.filter((section) => section.advanced),
   ];
 
   if (!activeId) return <Navigate to={settingsPath("general")} replace />;
@@ -444,6 +463,7 @@ export function SettingsPage() {
         title={t`Settings`}
         onBack={navigation.back}
         sections={sections}
+        advancedLabel={t`Advanced`}
         activeId="general"
         onSelect={navigation.select}
         heading={space?.name ?? t`Space`}
@@ -477,6 +497,7 @@ export function SettingsPage() {
       title={t`Settings`}
       onBack={navigation.back}
       sections={sections}
+      advancedLabel={t`Advanced`}
       activeId={active.id}
       onSelect={navigation.select}
       width={active.width}

@@ -15,8 +15,6 @@ import type { Panel } from "../../lib/right-panel-state";
 import type { createSpaceRpc } from "../../lib/rpc";
 import { selectSpace } from "../../lib/rpc";
 import { useSidePanel } from "../../lib/side-panel";
-import { CommandPalette } from "./command-palette";
-import { isCommandPaletteHotkey } from "./command-palette-hotkey";
 import type { CreateBotPanelInput } from "./create-bot-panel";
 import { CreateBotPanel } from "./create-bot-panel";
 import {
@@ -64,16 +62,6 @@ export function useShellDialogs() {
     (open: boolean) => (open ? openPanel("new-agent") : panel === "new-agent" && closePanel()),
     [openPanel, closePanel, panel],
   );
-  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
-  useEffect(() => {
-    function onKey(event: KeyboardEvent) {
-      if (!isCommandPaletteHotkey(event)) return;
-      event.preventDefault();
-      setCommandPaletteOpen((open) => !open);
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
   return {
     deleteTarget,
     setDeleteTarget,
@@ -97,30 +85,25 @@ export function useShellDialogs() {
     setNewSpaceOpen,
     createBotOpen,
     setCreateBotOpen,
-    commandPaletteOpen,
-    setCommandPaletteOpen,
   };
 }
 
 export type ShellDialogsState = ReturnType<typeof useShellDialogs>;
 
-/** The shell's confirmation dialogs, the space menu, and the command palette. */
+/** The shell's confirmation dialogs and the space menu. */
 export function ShellDialogs({
   dialogs,
   rpc,
   spaces,
   bots,
-  groups,
   activeId,
   activeGroupId,
   alive,
-  navigate,
   setPanel,
   refreshBots,
   removeSpace,
   setSpacePaused,
   openSpaceSettings,
-  closeMobileSidebar,
   createBot,
   onImportFromCreate,
   clearOpenThread,
@@ -130,17 +113,14 @@ export function ShellDialogs({
   rpc: ReturnType<typeof createSpaceRpc>;
   spaces: Space[];
   bots: Bot[];
-  groups: Group[];
   activeId: string | undefined;
   activeGroupId: string | undefined;
   alive: RefObject<boolean>;
-  navigate: (path: string) => void;
   setPanel: (panel: Panel) => void;
   refreshBots: (includeArchived?: boolean) => Promise<void>;
   removeSpace: (spaceId: string) => Promise<void>;
   setSpacePaused: (spaceId: string, paused: boolean) => Promise<void>;
   openSpaceSettings: (spaceId: string) => void;
-  closeMobileSidebar: () => void;
   createBot: (input: CreateBotPanelInput) => Promise<void>;
   onImportFromCreate: () => void;
   clearOpenThread: () => void;
@@ -169,8 +149,6 @@ export function ShellDialogs({
     setNewSpaceOpen,
     createBotOpen,
     setCreateBotOpen,
-    commandPaletteOpen,
-    setCommandPaletteOpen,
   } = dialogs;
   const spaceMenuTarget = spaceMenu
     ? (spaces.find((space) => space.id === spaceMenu.id) ?? null)
@@ -338,21 +316,6 @@ export function ShellDialogs({
           }}
         />
       ) : null}
-
-      <CommandPalette
-        open={commandPaletteOpen}
-        onOpenChange={setCommandPaletteOpen}
-        bots={bots}
-        groups={groups}
-        onSelectBot={(id) => {
-          closeMobileSidebar();
-          navigate(`/app/${id}`);
-        }}
-        onNavigate={(path) => {
-          closeMobileSidebar();
-          navigate(path);
-        }}
-      />
 
       {createBotOpen ? (
         <CreateBotPanel

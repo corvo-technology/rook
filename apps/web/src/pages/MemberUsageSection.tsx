@@ -4,7 +4,7 @@ import { useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { SettingsGroup, SettingsRow } from "../components/SettingsRows";
-import { formatTokens } from "../lib/context-meter";
+import { formatTokens } from "../lib/format-tokens";
 import { useSpaceQueries } from "../lib/query";
 import { useSpaceRpc } from "../lib/space-rpc";
 import { errorText } from "../lib/user-error";

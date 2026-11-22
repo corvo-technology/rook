@@ -146,13 +146,11 @@ test.describe("the channel as the approved canvas draws it", () => {
       // The space, its places, then channels, agents and people.
       await expect(sidebar.getByText("2 people · 4 agents")).toBeVisible();
       await expect(sidebar.getByTestId("sidebar-nav").getByRole("button")).toHaveText([
-        "Go to…⌘K",
         "Home",
         "Approvals1",
         "Tasks",
         "Routines",
         "Activity",
-        "Team",
         "More",
       ]);
       await expect(sidebar.getByText("Channels")).toBeVisible();

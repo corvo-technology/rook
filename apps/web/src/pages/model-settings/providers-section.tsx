@@ -31,6 +31,7 @@ export function ProvidersSection({
   onOpen,
   panel,
   panelAt,
+  simple = false,
 }: {
   credentials: ModelCredential[];
   /** Every provider that can be connected, connected ones included. */
@@ -44,12 +45,16 @@ export function ProvidersSection({
   panel?: ReactNode;
   /** The connection id the form belongs to, or "add" for a new one. */
   panelAt?: string | null;
+  /** The short version for non-technical people: no heading, one plain way to add. */
+  simple?: boolean;
 }) {
   return (
     <section className="mb-8" data-testid="model-providers">
-      <h3 className="mb-2.5 text-[15px] font-medium text-foreground">
-        <Trans>Providers</Trans>
-      </h3>
+      {simple ? null : (
+        <h3 className="mb-2.5 text-[15px] font-medium text-foreground">
+          <Trans>Providers</Trans>
+        </h3>
+      )}
       <ul className="divide-y divide-border rounded-xl border border-border">
         {[...credentials]
           // Saving a key reorders the account's connections; this list stays put.
@@ -74,7 +79,7 @@ export function ProvidersSection({
             </li>
           ))}
         <li>
-          <AddProvider providers={providers} disabled={disabled} onPick={onAdd} />
+          <AddProvider providers={providers} disabled={disabled} onPick={onAdd} simple={simple} />
         </li>
       </ul>
       {panelAt === "add" ? panel : null}
@@ -143,10 +148,12 @@ function AddProvider({
   providers,
   disabled,
   onPick,
+  simple,
 }: {
   providers: ConnectableProvider[];
   disabled?: boolean;
   onPick: (provider: ConnectableProvider) => void;
+  simple: boolean;
 }) {
   const { t } = useLingui();
   const searchRef = useRef<HTMLInputElement>(null);
@@ -170,7 +177,7 @@ function AddProvider({
             className="flex w-full items-center gap-2 rounded-b-xl px-3 py-3 text-start text-[14px] text-muted-foreground outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
           >
             <Plus className="size-4" aria-hidden />
-            <Trans>Add provider</Trans>
+            {simple ? <Trans>Connect ChatGPT or Claude</Trans> : <Trans>Add provider</Trans>}
           </button>
         }
       />

@@ -1,6 +1,6 @@
-import { ChevronLeft } from "lucide-react";
+import { ChevronDown, ChevronLeft } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "./components/ui/button.js";
 import { cn } from "./lib/utils.js";
 
@@ -8,7 +8,27 @@ export type SettingsLayoutSection = {
   id: string;
   label: string;
   icon?: ComponentType<{ className?: string; strokeWidth?: number }>;
+  /** Sections marked advanced sit in a collapsed group at the bottom of the nav. */
+  advanced?: boolean;
 };
+
+const ADVANCED_OPEN_KEY = "corvo:settings-advanced-open";
+
+function readAdvancedOpen(): boolean {
+  try {
+    return window.localStorage.getItem(ADVANCED_OPEN_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function writeAdvancedOpen(open: boolean) {
+  try {
+    window.localStorage.setItem(ADVANCED_OPEN_KEY, open ? "1" : "0");
+  } catch {
+    // The group still opens for this visit.
+  }
+}
 
 export type SettingsLayoutProps = {
   /** The page name, shown beside the back arrow ("Settings"). */
@@ -19,6 +39,8 @@ export type SettingsLayoutProps = {
   activeId: string;
   /** Navigate to the section's own route. */
   onSelect: (id: string) => void;
+  /** The name of the collapsed group that holds the advanced sections. */
+  advancedLabel?: string;
   /** Optional title override for the content; defaults to the active section's label. */
   heading?: ReactNode;
   /** Content width: `prose` (max-w-2xl, default) or `full` for tables. */
@@ -38,6 +60,7 @@ export function SettingsLayout({
   sections,
   activeId,
   onSelect,
+  advancedLabel,
   heading,
   width = "prose",
   children,
@@ -45,6 +68,34 @@ export function SettingsLayout({
   const onBackRef = useRef(onBack);
   onBackRef.current = onBack;
   const active = sections.find((section) => section.id === activeId);
+  const [advancedOpen, setAdvancedOpen] = useState(readAdvancedOpen);
+  const main = sections.filter((section) => !section.advanced);
+  const advanced = sections.filter((section) => section.advanced);
+  // An advanced section that is open always shows its own entry.
+  const advancedShown = advancedOpen || Boolean(active?.advanced);
+
+  const renderSection = (section: SettingsLayoutSection) => {
+    const Icon = section.icon;
+    const current = section.id === activeId;
+    return (
+      <button
+        key={section.id}
+        type="button"
+        data-testid={`settings-nav-${section.id}`}
+        aria-current={current ? "page" : undefined}
+        onClick={() => onSelect(section.id)}
+        className={cn(
+          "flex shrink-0 items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-body1 outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50",
+          current
+            ? "bg-accent text-accent-foreground"
+            : "text-muted-foreground hover:bg-accent hover:text-foreground",
+        )}
+      >
+        {Icon ? <Icon className="size-4 shrink-0" strokeWidth={1.75} /> : null}
+        <span className="whitespace-nowrap">{section.label}</span>
+      </button>
+    );
+  };
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -80,28 +131,32 @@ export function SettingsLayout({
           data-testid="settings-nav"
           className="rk-scroll flex flex-row gap-1 overflow-x-auto py-2 md:flex-col md:overflow-y-auto md:py-3"
         >
-          {sections.map((section) => {
-            const Icon = section.icon;
-            const current = section.id === activeId;
-            return (
+          {main.map(renderSection)}
+          {advanced.length > 0 ? (
+            <>
               <button
-                key={section.id}
                 type="button"
-                data-testid={`settings-nav-${section.id}`}
-                aria-current={current ? "page" : undefined}
-                onClick={() => onSelect(section.id)}
-                className={cn(
-                  "flex shrink-0 items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-body1 outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50",
-                  current
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground",
-                )}
+                data-testid="settings-nav-advanced"
+                aria-expanded={advancedShown}
+                disabled={Boolean(active?.advanced)}
+                onClick={() => {
+                  setAdvancedOpen(!advancedOpen);
+                  writeAdvancedOpen(!advancedOpen);
+                }}
+                className="flex shrink-0 items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-body1 text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
               >
-                {Icon ? <Icon className="size-4 shrink-0" strokeWidth={1.75} /> : null}
-                <span className="whitespace-nowrap">{section.label}</span>
+                <ChevronDown
+                  className={cn(
+                    "size-4 shrink-0 transition-transform",
+                    !advancedShown && "-rotate-90",
+                  )}
+                  strokeWidth={1.75}
+                />
+                <span className="whitespace-nowrap">{advancedLabel}</span>
               </button>
-            );
-          })}
+              {advancedShown ? advanced.map(renderSection) : null}
+            </>
+          ) : null}
         </nav>
       </div>
       <main className="rk-scroll min-h-0 min-w-0 flex-1 overflow-y-auto px-6 pb-12 pt-8 md:px-12 md:pt-12">

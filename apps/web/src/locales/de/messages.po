@@ -1099,6 +1099,12 @@ msgstr "Server hinzufügen"
 msgid "Add server URL"
 msgstr "Server-URL hinzufügen"
 
+#: src/pages/AddSkillPanel.tsx
+#: src/pages/KnowledgeSection.tsx
+#: src/pages/SkillsSettings.tsx
+msgid "Add skill"
+msgstr "Fähigkeit hinzufügen"
+
 #: src/pages/AddStepPanel.tsx
 #: src/pages/Workflows.tsx
 msgid "Add step"
@@ -1168,6 +1174,7 @@ msgstr "Hinzugefügt von {otherOwner}"
 msgid "Added to the wiki"
 msgstr "Zum Wiki hinzugefügt"
 
+#: src/pages/AddSkillPanel.tsx
 #: src/pages/AppCatalogGrid.tsx
 #: src/pages/connections/McpServerForm.tsx
 #: src/pages/Store.tsx
@@ -2073,6 +2080,7 @@ msgstr "Kann keine Bilder lesen"
 #: src/components/PasskeySettings.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AddSkillPanel.tsx
 #: src/pages/AddStepPanel.tsx
 #: src/pages/connections/DatabaseForm.tsx
 #: src/pages/connections/MailboxForm.tsx
@@ -2263,6 +2271,10 @@ msgstr "Checkout-URL"
 msgid "Choose"
 msgstr "Auswählen"
 
+#: src/pages/AddSkillPanel.tsx
+msgid "Choose a .zip"
+msgstr ".zip auswählen"
+
 #: src/pages/shell/agent-import.tsx
 msgid "Choose a bot"
 msgstr "Bot auswählen"
@@ -2366,6 +2378,7 @@ msgid "Clinic or practice"
 msgstr "Klinik oder Praxis"
 
 #: src/components/ErrorBoundary.tsx
+#: src/pages/AddSkillPanel.tsx
 #: src/pages/AddStepPanel.tsx
 #: src/pages/Board.tsx
 #: src/pages/BoardSettings.tsx
@@ -2593,6 +2606,7 @@ msgid "Confirm delete"
 msgstr "Löschen bestätigen"
 
 #: src/components/PasskeySettings.tsx
+#: src/pages/SkillsSettings.tsx
 msgid "Confirm delete?"
 msgstr "Löschen bestätigen?"
 
@@ -2905,6 +2919,10 @@ msgstr "Der Agent konnte nicht hinzugefügt werden"
 msgid "Could not add the file"
 msgstr "Die Datei konnte nicht hinzugefügt werden"
 
+#: src/pages/AddSkillPanel.tsx
+msgid "Could not add the skill"
+msgstr "Die Fähigkeit konnte nicht hinzugefügt werden"
+
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Could not approve"
 msgstr "Genehmigen fehlgeschlagen"
@@ -3055,6 +3073,7 @@ msgid "Could not delete section"
 msgstr "Abschnitt konnte nicht gelöscht werden"
 
 #: src/pages/KnowledgeSection.tsx
+#: src/pages/SkillsSettings.tsx
 msgid "Could not delete skill"
 msgstr "Skill konnte nicht gelöscht werden"
 
@@ -4881,6 +4900,10 @@ msgstr "Die Stimme wird vorbereitet ({size} MB). Das passiert nur einmal."
 msgid "Git event"
 msgstr "Git-Ereignis"
 
+#: src/pages/AddSkillPanel.tsx
+msgid "GitHub link"
+msgstr "GitHub-Link"
+
 #: src/pages/shell/message-cards.tsx
 msgid "Give {forBotName} read access to {name}?"
 msgstr "{forBotName} Lesezugriff auf {name} geben?"
@@ -5274,6 +5297,7 @@ msgstr "Anweisung: {instruction}"
 
 #: src/components/AskCard.tsx
 #: src/components/InstructionSettings.tsx
+#: src/pages/AddSkillPanel.tsx
 #: src/pages/AddStepPanel.tsx
 #: src/pages/ImportFlow.tsx
 #: src/pages/NewRoutinePanel.tsx
@@ -6350,6 +6374,7 @@ msgstr "Meine Startseite"
 #: src/components/McpSettings.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AddSkillPanel.tsx
 #: src/pages/Auth.tsx
 #: src/pages/connections/DatabaseForm.tsx
 #: src/pages/connections/McpServerForm.tsx
@@ -6755,6 +6780,7 @@ msgid "No runs yet"
 msgstr "Noch keine Ausführungen"
 
 #: src/pages/KnowledgeSection.tsx
+#: src/pages/SkillsSettings.tsx
 msgid "No skills yet"
 msgstr "Noch keine Skills"
 
@@ -7331,6 +7357,10 @@ msgstr "Überfällig"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Paste a replacement key"
 msgstr "Ersatzschlüssel einfügen"
+
+#: src/pages/AddSkillPanel.tsx
+msgid "Paste link"
+msgstr "Link einfügen"
 
 #: src/pages/ImportFlow.tsx
 msgid "Paste the answer"
@@ -7951,6 +7981,7 @@ msgstr "Gemerkt"
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/SkillsSettings.tsx
 #: src/pages/Store.tsx
 #: src/pages/VaultPage.tsx
 #: src/pages/Workflows.tsx
@@ -7959,8 +7990,10 @@ msgstr "Entfernen"
 
 #. placeholder {0}: attachment.file.name
 #. placeholder {0}: member.name
+#. placeholder {0}: skill.name
 #: src/pages/shell/channel-members.tsx
 #: src/pages/shell/composer.tsx
+#: src/pages/SkillsSettings.tsx
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Remove {0}"
 msgstr "{0} entfernen"
@@ -8971,6 +9004,7 @@ msgstr "Skill {position}"
 
 #: src/pages/ImportFlow.tsx
 #: src/pages/KnowledgeSection.tsx
+#: src/pages/Settings.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/Store.tsx
 msgid "Skills"
@@ -9520,6 +9554,10 @@ msgstr "Das hat nicht geklappt"
 #: src/pages/partner/PartnerTemplatePanel.tsx
 msgid "That file is not a valid template"
 msgstr "Diese Datei ist keine gültige Vorlage"
+
+#: src/pages/AddSkillPanel.tsx
+msgid "That file is too large."
+msgstr "Diese Datei ist zu groß."
 
 #: src/lib/server-copy.ts
 msgid "The {name} routine is paused because its change check failed: {reason}"
@@ -10229,6 +10267,10 @@ msgstr "Jetzt upgraden"
 msgid "Upload"
 msgstr "Hochladen"
 
+#: src/pages/AddSkillPanel.tsx
+msgid "Upload .zip"
+msgstr ".zip hochladen"
+
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Upload files"
 msgstr "Dateien hochladen"
@@ -10699,6 +10741,7 @@ msgid "When to run"
 msgstr "Ausführungszeit"
 
 #: src/components/teach/SkillDraftCard.tsx
+#: src/pages/AddSkillPanel.tsx
 msgid "When to use"
 msgstr "Einsatzzeitpunkt"
 
@@ -10807,6 +10850,10 @@ msgstr "Workspace"
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Workspace name"
 msgstr "Name des Workspace"
+
+#: src/pages/AddSkillPanel.tsx
+msgid "Write"
+msgstr "Schreiben"
 
 #: src/lib/activity-label.ts
 msgid "Writing {value}"

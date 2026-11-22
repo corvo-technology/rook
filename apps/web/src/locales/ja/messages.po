@@ -1099,6 +1099,12 @@ msgstr "サーバーを追加"
 msgid "Add server URL"
 msgstr "サーバーURLを追加"
 
+#: src/pages/AddSkillPanel.tsx
+#: src/pages/KnowledgeSection.tsx
+#: src/pages/SkillsSettings.tsx
+msgid "Add skill"
+msgstr "スキルを追加"
+
 #: src/pages/AddStepPanel.tsx
 #: src/pages/Workflows.tsx
 msgid "Add step"
@@ -1168,6 +1174,7 @@ msgstr "{otherOwner} が追加"
 msgid "Added to the wiki"
 msgstr "Wikiに追加しました"
 
+#: src/pages/AddSkillPanel.tsx
 #: src/pages/AppCatalogGrid.tsx
 #: src/pages/connections/McpServerForm.tsx
 #: src/pages/Store.tsx
@@ -2073,6 +2080,7 @@ msgstr "画像を読み取れません"
 #: src/components/PasskeySettings.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AddSkillPanel.tsx
 #: src/pages/AddStepPanel.tsx
 #: src/pages/connections/DatabaseForm.tsx
 #: src/pages/connections/MailboxForm.tsx
@@ -2263,6 +2271,10 @@ msgstr "チェックアウトURL"
 msgid "Choose"
 msgstr "選ぶ"
 
+#: src/pages/AddSkillPanel.tsx
+msgid "Choose a .zip"
+msgstr ".zip を選択"
+
 #: src/pages/shell/agent-import.tsx
 msgid "Choose a bot"
 msgstr "ボットを選択"
@@ -2366,6 +2378,7 @@ msgid "Clinic or practice"
 msgstr "クリニックまたは診療所"
 
 #: src/components/ErrorBoundary.tsx
+#: src/pages/AddSkillPanel.tsx
 #: src/pages/AddStepPanel.tsx
 #: src/pages/Board.tsx
 #: src/pages/BoardSettings.tsx
@@ -2593,6 +2606,7 @@ msgid "Confirm delete"
 msgstr "削除を確認"
 
 #: src/components/PasskeySettings.tsx
+#: src/pages/SkillsSettings.tsx
 msgid "Confirm delete?"
 msgstr "削除しますか？"
 
@@ -2905,6 +2919,10 @@ msgstr "エージェントを追加できませんでした"
 msgid "Could not add the file"
 msgstr "ファイルを追加できませんでした"
 
+#: src/pages/AddSkillPanel.tsx
+msgid "Could not add the skill"
+msgstr "スキルを追加できませんでした"
+
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Could not approve"
 msgstr "承認できませんでした"
@@ -3055,6 +3073,7 @@ msgid "Could not delete section"
 msgstr "セクションを削除できませんでした"
 
 #: src/pages/KnowledgeSection.tsx
+#: src/pages/SkillsSettings.tsx
 msgid "Could not delete skill"
 msgstr "スキルを削除できませんでした"
 
@@ -4881,6 +4900,10 @@ msgstr "音声を準備しています（{size} MB）。初回のみです。"
 msgid "Git event"
 msgstr "Gitイベント"
 
+#: src/pages/AddSkillPanel.tsx
+msgid "GitHub link"
+msgstr "GitHub のリンク"
+
 #: src/pages/shell/message-cards.tsx
 msgid "Give {forBotName} read access to {name}?"
 msgstr "{forBotName} に {name} の読み取りアクセスを許可しますか？"
@@ -5274,6 +5297,7 @@ msgstr "指示：{instruction}"
 
 #: src/components/AskCard.tsx
 #: src/components/InstructionSettings.tsx
+#: src/pages/AddSkillPanel.tsx
 #: src/pages/AddStepPanel.tsx
 #: src/pages/ImportFlow.tsx
 #: src/pages/NewRoutinePanel.tsx
@@ -6350,6 +6374,7 @@ msgstr "マイホーム"
 #: src/components/McpSettings.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AddSkillPanel.tsx
 #: src/pages/Auth.tsx
 #: src/pages/connections/DatabaseForm.tsx
 #: src/pages/connections/McpServerForm.tsx
@@ -6755,6 +6780,7 @@ msgid "No runs yet"
 msgstr "実行はまだありません"
 
 #: src/pages/KnowledgeSection.tsx
+#: src/pages/SkillsSettings.tsx
 msgid "No skills yet"
 msgstr "スキルはまだありません"
 
@@ -7331,6 +7357,10 @@ msgstr "支払い期限超過"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Paste a replacement key"
 msgstr "新しいキーを貼り付け"
+
+#: src/pages/AddSkillPanel.tsx
+msgid "Paste link"
+msgstr "リンクを貼り付け"
 
 #: src/pages/ImportFlow.tsx
 msgid "Paste the answer"
@@ -7951,6 +7981,7 @@ msgstr "覚えました"
 #: src/pages/PartnerTemplateEditor.tsx
 #: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/SkillsSettings.tsx
 #: src/pages/Store.tsx
 #: src/pages/VaultPage.tsx
 #: src/pages/Workflows.tsx
@@ -7959,8 +7990,10 @@ msgstr "削除"
 
 #. placeholder {0}: attachment.file.name
 #. placeholder {0}: member.name
+#. placeholder {0}: skill.name
 #: src/pages/shell/channel-members.tsx
 #: src/pages/shell/composer.tsx
+#: src/pages/SkillsSettings.tsx
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Remove {0}"
 msgstr "{0}を削除"
@@ -8971,6 +9004,7 @@ msgstr "スキル {position}"
 
 #: src/pages/ImportFlow.tsx
 #: src/pages/KnowledgeSection.tsx
+#: src/pages/Settings.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/Store.tsx
 msgid "Skills"
@@ -9520,6 +9554,10 @@ msgstr "うまくいきませんでした"
 #: src/pages/partner/PartnerTemplatePanel.tsx
 msgid "That file is not a valid template"
 msgstr "このファイルは有効なテンプレートではありません"
+
+#: src/pages/AddSkillPanel.tsx
+msgid "That file is too large."
+msgstr "ファイルが大きすぎます。"
 
 #: src/lib/server-copy.ts
 msgid "The {name} routine is paused because its change check failed: {reason}"
@@ -10229,6 +10267,10 @@ msgstr "今すぐアップグレード"
 msgid "Upload"
 msgstr "アップロード"
 
+#: src/pages/AddSkillPanel.tsx
+msgid "Upload .zip"
+msgstr ".zip をアップロード"
+
 #: src/pages/SpaceRolesSettings.tsx
 msgid "Upload files"
 msgstr "ファイルをアップロード"
@@ -10699,6 +10741,7 @@ msgid "When to run"
 msgstr "実行タイミング"
 
 #: src/components/teach/SkillDraftCard.tsx
+#: src/pages/AddSkillPanel.tsx
 msgid "When to use"
 msgstr "使用するタイミング"
 
@@ -10807,6 +10850,10 @@ msgstr "ワークスペース"
 #: src/pages/MembersSettingsPanel.tsx
 msgid "Workspace name"
 msgstr "ワークスペース名"
+
+#: src/pages/AddSkillPanel.tsx
+msgid "Write"
+msgstr "書く"
 
 #: src/lib/activity-label.ts
 msgid "Writing {value}"

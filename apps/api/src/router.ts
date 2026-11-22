@@ -73,6 +73,7 @@ import { threadsRoutes } from "./routes/threads.js";
 import { vaultRoutes } from "./routes/vault.js";
 import { wikiRoutes } from "./routes/wiki.js";
 import { youRoutes } from "./routes/you.js";
+import type { SkillImportFetchOptions } from "./skill-import.js";
 import type { TeamDeps } from "./team.js";
 import type { VoiceDeps } from "./voice.js";
 
@@ -89,6 +90,8 @@ export interface RouterDeps {
   localSetup?: LocalSetupCheck;
   /** Installs and signs in coding-agent CLIs; absent where CLI engines are not offered. */
   cliEngineSetup?: CliEngineSetupService;
+  /** The network and DNS a skill link is fetched with; tests replace them so nothing goes out. */
+  skillImport?: SkillImportFetchOptions;
   /** The one-prompt model test; injectable so tests never reach a model. */
   testLocalModel?: typeof testModelOnce;
   /** Present only on the desktop app's own engine, where speech models can live. */

@@ -5,6 +5,7 @@ import { Button, Disclosure, SettingsLayout } from "@corvo/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  BookOpen,
   Brain,
   CloudDownload,
   Cpu,
@@ -46,6 +47,7 @@ import { ConnectionsSettingsPanel } from "./ConnectionsSettingsPanel";
 import { MembersSettingsPanel } from "./MembersSettingsPanel";
 import { MemorySettingsOverlay } from "./MemorySettingsOverlay";
 import { ModelSettingsOverlay } from "./ModelSettingsOverlay";
+import { SkillsSettings } from "./SkillsSettings";
 import { SpaceSettingsPanel } from "./SpaceSettingsPanel";
 import { commitSpaceRename } from "./shell/space-sidebar";
 import { VaultPage } from "./VaultPage";
@@ -366,6 +368,12 @@ export function SettingsPage() {
           ) : null}
         </div>
       ),
+    },
+    {
+      id: "skills",
+      label: t`Skills`,
+      icon: BookOpen,
+      content: <SkillsSettings />,
     },
     {
       id: "mcp-access",

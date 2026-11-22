@@ -1,6 +1,7 @@
 import * as z from "zod";
 import { STORE_CATEGORIES } from "./agent-catalog.js";
 import { AGENT_SECRET_NAME_PATTERN } from "./agent-secret-name.js";
+import { ATTACHMENT_MAX_BASE64_LENGTH } from "./attachments.js";
 import {
   BoardStatusLabelsSchema,
   TICKET_COMMENT_MAX_LENGTH,
@@ -849,6 +850,16 @@ export const CreateAgentSkillInput = z
       });
     }
   });
+
+/** A skill added from a GitHub link or a zipped skill folder; the server fetches and checks it. */
+export const SkillImportInput = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("url"), url: z.string().trim().min(1).max(2048) }),
+  z.object({
+    kind: z.literal("zip"),
+    dataBase64: z.string().min(1).max(ATTACHMENT_MAX_BASE64_LENGTH),
+  }),
+]);
+export type SkillImportInput = z.infer<typeof SkillImportInput>;
 
 export const UpdateAgentSkillInput = z
   .object({

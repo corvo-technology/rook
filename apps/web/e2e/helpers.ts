@@ -270,6 +270,7 @@ export async function openUserSettings(
     | "billing"
     | "members"
     | "connections"
+    | "skills"
     | "mcp-access"
     | "vault"
     | "updates",

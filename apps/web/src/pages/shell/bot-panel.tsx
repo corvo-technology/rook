@@ -160,10 +160,13 @@ export function BotSettings({
   onDesignAvatar,
   focusModel = 0,
   onOpenConnections,
+  onAddSkill,
 }: {
   bot: Bot;
   focusModel?: number;
   onOpenConnections?: () => void;
+  /** Opens the add-skill panel in Settings. */
+  onAddSkill?: () => void;
   /** Unused: the skill sections read and save the shared cached skill list. */
   onSkillsChange?: (skills: AgentSkillCatalogEntry[]) => void;
   memoryProviderConfigured: boolean;
@@ -1067,7 +1070,7 @@ export function BotSettings({
             <BotCredentialsSection botId={bot.id} />
             <ErrorBoundary fallback={<SectionLoadFailed />}>
               <Suspense fallback={null}>
-                <KnowledgeSection botId={bot.id} skillsOnly />
+                <KnowledgeSection botId={bot.id} skillsOnly onAddSkill={onAddSkill} />
               </Suspense>
             </ErrorBoundary>
             <div className="overflow-hidden rounded-xl bg-muted/50 px-4">

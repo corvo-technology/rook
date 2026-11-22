@@ -770,8 +770,9 @@ function SpaceShell({ page }: { page?: ReactNode }) {
     writeBotsSidebarCollapsed(userId, collapsed);
   }
 
-  function openSettings(section: SettingsSection = "general") {
-    openSettingsRoute(section);
+  /** `search` is a query string for the section, e.g. `?panel=add-skill`. */
+  function openSettings(section: SettingsSection = "general", search = "") {
+    openSettingsRoute(`${section}${search}`);
   }
 
   // The desktop app's native Settings menu item (Cmd-,).

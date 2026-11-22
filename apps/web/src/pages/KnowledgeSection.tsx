@@ -29,11 +29,14 @@ function rowClass(open: boolean): string {
 export function KnowledgeSection({
   botId,
   skillsOnly = false,
+  onAddSkill,
 }: {
   botId: string;
   /** Unused: skills are read from and saved to the shared cached list. */
   onSkillsChange?: (skills: AgentSkillCatalogEntry[]) => void;
   skillsOnly?: boolean;
+  /** Where a skill from a link or a .zip is added; without it the section only edits. */
+  onAddSkill?: () => void;
 }) {
   if (skillsOnly)
     return (
@@ -42,7 +45,7 @@ export function KnowledgeSection({
           <Trans>Skills</Trans>
         </h3>
         <div className="rounded-xl bg-muted/50 p-4">
-          <AgentSkills />
+          <AgentSkills onAddSkill={onAddSkill} />
         </div>
       </section>
     );
@@ -331,7 +334,7 @@ description: What this skill does and when the agent should use it.
 Steps the agent should follow.
 `;
 
-function AgentSkills() {
+function AgentSkills({ onAddSkill }: { onAddSkill?: () => void }) {
   const rpc = useSpaceRpc();
   const { t } = useLingui();
   const queries = useSpaceQueries();
@@ -549,6 +552,18 @@ function AgentSkills() {
           <Plus aria-hidden="true" className="size-4 text-muted-foreground" />
         </Button>
       )}
+      {!editorOpen && onAddSkill ? (
+        <Button
+          variant="ghost"
+          type="button"
+          disabled={busy}
+          onClick={onAddSkill}
+          className="-mx-2.5 h-auto min-h-11 w-[calc(100%+1.25rem)] justify-between px-2.5 py-2.5 text-sm font-normal text-foreground"
+        >
+          <Trans>Add skill</Trans>
+          <Plus aria-hidden="true" className="size-4 text-muted-foreground" />
+        </Button>
+      ) : null}
     </div>
   );
 }

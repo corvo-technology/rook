@@ -9,6 +9,8 @@ import {
   serializeSpaceMemoryConfig,
   updateMemoryProviderDefaultScope,
 } from "../memory-provider-config.js";
+import { resolveSkillImport } from "../skill-import.js";
+import { requireSpacePermission } from "../space-owner.js";
 import type { RouterContext } from "./context.js";
 
 /** Memory a person or an agent keeps. The space's wiki is memory documents too, but has its own procedures. */
@@ -235,15 +237,23 @@ export function memoryRoutes(ctx: RouterContext) {
       get: authed.agentSkills.get.handler(async ({ context, input }) =>
         agentSkills.get(context.actor, input),
       ),
-      create: authed.agentSkills.create.handler(async ({ context, input }) =>
-        agentSkills.create(context.actor, input),
-      ),
-      update: authed.agentSkills.update.handler(async ({ context, input }) =>
-        agentSkills.update(context.actor, input),
-      ),
-      remove: authed.agentSkills.remove.handler(async ({ context, input }) =>
-        agentSkills.remove(context.actor, input.skillId),
-      ),
+      create: authed.agentSkills.create.handler(async ({ context, input }) => {
+        await requireSpacePermission(deps.prisma, context.actor, "configure");
+        return agentSkills.create(context.actor, input);
+      }),
+      import: authed.agentSkills.import.handler(async ({ context, input }) => {
+        await requireSpacePermission(deps.prisma, context.actor, "configure");
+        const content = await resolveSkillImport(input, deps.skillImport);
+        return agentSkills.create(context.actor, { content });
+      }),
+      update: authed.agentSkills.update.handler(async ({ context, input }) => {
+        await requireSpacePermission(deps.prisma, context.actor, "configure");
+        return agentSkills.update(context.actor, input);
+      }),
+      remove: authed.agentSkills.remove.handler(async ({ context, input }) => {
+        await requireSpacePermission(deps.prisma, context.actor, "configure");
+        return agentSkills.remove(context.actor, input.skillId);
+      }),
     },
   };
 }

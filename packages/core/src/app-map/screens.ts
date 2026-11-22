@@ -406,6 +406,24 @@ export const APP_MAP_SCREENS: readonly AppMapEntry[] = [
     },
   ),
   screen(
+    "settings-skills",
+    "/settings/skills",
+    "owner",
+    ALL,
+    {
+      title: "Skills",
+      description:
+        "Add a skill from a GitHub link, a .zip or by writing it, and remove the ones your agents no longer need.",
+      keywords: ["skills", "skill", "github", "zip", "instructions", "habilidades"],
+    },
+    {
+      title: "Habilidades",
+      description:
+        "Adicione uma habilidade por link do GitHub, arquivo .zip ou escrevendo, e remova as que seus agentes não precisam mais.",
+      keywords: ["habilidades", "habilidade", "github", "zip", "instruções", "skill"],
+    },
+  ),
+  screen(
     "settings-mcp-access",
     "/settings/mcp-access",
     "member",

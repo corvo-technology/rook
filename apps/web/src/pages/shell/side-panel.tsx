@@ -86,7 +86,7 @@ export function ShellSidePanel({
   importFromDialog: boolean;
   setCreateBotOpen: (open: boolean) => void;
   modelFocusRequest: number;
-  openSettings: (section: SettingsSection) => void;
+  openSettings: (section: SettingsSection, search?: string) => void;
   memoryProviderConfigured: boolean;
   setAgentSkills: (skills: AgentSkillCatalogEntry[]) => void;
   onClearBot: (bot: Bot) => void;
@@ -253,6 +253,7 @@ export function ShellSidePanel({
               bot={active}
               focusModel={modelFocusRequest}
               onOpenConnections={() => openSettings("models")}
+              onAddSkill={() => openSettings("skills", "?panel=add-skill")}
               memoryProviderConfigured={memoryProviderConfigured}
               onSkillsChange={setAgentSkills}
               onSave={async ({ computerMode, ...patch }) => {

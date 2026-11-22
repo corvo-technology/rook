@@ -141,6 +141,7 @@ import {
   ServerUpdateRunSchema,
   ServerUpdateStatusSchema,
   SignupSurveySchema,
+  SkillImportInput,
   SkillPlaybookSchema,
   SpaceExportSchema,
   SpaceImportResultSchema,
@@ -1458,6 +1459,7 @@ export const appContract = {
       )
       .output(AgentSkillSchema),
     create: oc.input(CreateAgentSkillInput).output(AgentSkillSchema),
+    import: oc.input(SkillImportInput).output(AgentSkillSchema),
     update: oc.input(UpdateAgentSkillInput).output(AgentSkillSchema),
     remove: oc.input(z.object({ skillId: Id })).output(z.object({ ok: z.literal(true) })),
   },

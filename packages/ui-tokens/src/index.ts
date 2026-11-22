@@ -463,7 +463,7 @@ function renderBlock(selector: string, colorScheme: ResolvedAppearance, palette:
     `  --radius-control: ${radius.control}px;`,
     `  --radius-item: ${radius.item}px;`,
     `  --radius-surface: ${radius.surface}px;`,
-    `  --font-ui: ${fontFamily};`,
+    cssShadow("--font-ui", fontFamily),
     `  --body-tracking: ${bodyTracking};`,
     `  --radius-card: ${radius.card}px;`,
     `  --radius-panel: ${radius.panel}px;`,

@@ -106,15 +106,15 @@ it("uses Save and Cancel text buttons", async () => {
   expect(labels.map((label) => label.props.children)).toEqual(["Save", "Cancel"]);
   // Buttons and the focused field follow the app's own foreground, not a generated palette.
   const colors = capture.buttons.mock.calls.map(([props]) => props.colors?.contentColor);
-  expect(colors).toEqual(["#F4F4F5", "#F4F4F5"]);
+  expect(colors).toEqual(["#F5F5F7", "#F5F5F7"]);
   expect(capture.field.mock.lastCall![0].colors).toMatchObject({
-    focusedIndicatorColor: "#F4F4F5",
-    focusedLabelColor: "#F4F4F5",
-    cursorColor: "#F4F4F5",
+    focusedIndicatorColor: "#F5F5F7",
+    focusedLabelColor: "#F5F5F7",
+    cursorColor: "#F5F5F7",
   });
   expect(capture.field.mock.lastCall![0].textSelectionColors).toEqual({
-    handleColor: "#F4F4F5",
-    backgroundColor: "#F4F4F533",
+    handleColor: "#F5F5F7",
+    backgroundColor: "#F5F5F733",
   });
   capture.field.mock.lastCall![0].value.value = "Latest draft";
   capture.buttons.mock.calls[0]![0].onClick();

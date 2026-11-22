@@ -100,40 +100,40 @@ export type ColorTokens = {
 };
 
 export const darkTokens = {
-  background: "#0A0A0A",
-  dialog: "#111113",
-  foreground: "#F4F4F5",
+  background: "#000000",
+  dialog: "#1D1D1F",
+  foreground: "#F5F5F7",
   card: "#111113",
-  cardForeground: "#F4F4F5",
-  popover: "#111113",
-  popoverForeground: "#F4F4F5",
+  cardForeground: "#F5F5F7",
+  popover: "#1D1D1F",
+  popoverForeground: "#F5F5F7",
   glassFill: "#2C2C2E",
   glassStroke: "#FCFCFC26",
-  primary: "#F4F4F5",
+  primary: "#F5F5F7",
   primaryForeground: "#0A0A0A",
-  secondary: "#17171A",
-  secondaryForeground: "#F4F4F5",
-  chatUser: "#1C1C20",
-  chatUserForeground: "#F4F4F5",
-  muted: "#111113",
-  mutedForeground: "#A3A3AA",
-  faintForeground: "#6E6E76",
-  accent: "#17171A",
-  accentForeground: "#F4F4F5",
+  secondary: "#1D1D1F",
+  secondaryForeground: "#F5F5F7",
+  chatUser: "#2C2C2E",
+  chatUserForeground: "#F5F5F7",
+  muted: "#161617",
+  mutedForeground: "#A1A1A6",
+  faintForeground: "#7C7C82",
+  accent: "#232325",
+  accentForeground: "#F5F5F7",
   brand: "#54C398",
   brandForeground: "#0A0A0A",
   brandSoft: "#12241C",
   destructive: "#FF6463",
   destructiveFill: "#CF2B35",
   destructiveForeground: "#FFFFFF",
-  border: "#1F1F23",
-  input: "#2A2A30",
+  border: "#2C2C2E",
+  input: "#3A3A3C",
   ring: "#54C398",
-  sidebar: "#161619",
-  sidebarForeground: "#F4F4F5",
-  sidebarBorder: "#28282E",
-  sidebarAccent: "#222227",
-  sidebarAccentForeground: "#F4F4F5",
+  sidebar: "#161617",
+  sidebarForeground: "#F5F5F7",
+  sidebarBorder: "#2C2C2E",
+  sidebarAccent: "#2C2C2E",
+  sidebarAccentForeground: "#F5F5F7",
   link: "#54C398",
   faviconPlate: "#FFFFFF",
   success: "#54C398",
@@ -145,45 +145,45 @@ export const darkTokens = {
   bandLavender: "#1E1A2E",
   bandPeach: "#2A1E17",
   overlay: "#000000B2",
-  scrollbar: "#2A2A30",
-  scrollbarHover: "#3A3A40",
+  scrollbar: "#3A3A3C",
+  scrollbarHover: "#58585C",
 } as const satisfies ColorTokens;
 
 export const lightTokens = {
-  background: "#F4F5F7",
+  background: "#FFFFFF",
   dialog: "#FFFFFF",
-  foreground: "#111318",
+  foreground: "#1D1D1F",
   card: "#FFFFFF",
-  cardForeground: "#111318",
+  cardForeground: "#1D1D1F",
   popover: "#FFFFFF",
-  popoverForeground: "#111318",
+  popoverForeground: "#1D1D1F",
   glassFill: "#FFFFFF",
-  glassStroke: "#11131816",
-  primary: "#111318",
+  glassStroke: "#1D1D1F14",
+  primary: "#1D1D1F",
   primaryForeground: "#FFFFFF",
-  secondary: "#F1F2F5",
-  secondaryForeground: "#111318",
-  chatUser: "#111318",
+  secondary: "#F5F5F7",
+  secondaryForeground: "#1D1D1F",
+  chatUser: "#1D1D1F",
   chatUserForeground: "#FFFFFF",
-  muted: "#FAFAFB",
-  mutedForeground: "#5B6270",
-  faintForeground: "#7C8391",
-  accent: "#F1F2F5",
-  accentForeground: "#111318",
+  muted: "#F5F5F7",
+  mutedForeground: "#656568",
+  faintForeground: "#86868B",
+  accent: "#F0F0F2",
+  accentForeground: "#1D1D1F",
   brand: "#197B56",
   brandForeground: "#FFFFFF",
   brandSoft: "#E9F6EF",
   destructive: "#CD2834",
   destructiveFill: "#E72E3B",
   destructiveForeground: "#FFFFFF",
-  border: "#E7E9EE",
-  input: "#D5D9E0",
-  ring: "#2FA77A",
-  sidebar: "#F4F5F7",
-  sidebarForeground: "#111318",
-  sidebarBorder: "#E7E9EE",
-  sidebarAccent: "#E9EBF0",
-  sidebarAccentForeground: "#111318",
+  border: "#E6E6E8",
+  input: "#D6D6D6",
+  ring: "#197B56",
+  sidebar: "#F5F5F7",
+  sidebarForeground: "#1D1D1F",
+  sidebarBorder: "#E6E6E8",
+  sidebarAccent: "#E6E6E8",
+  sidebarAccentForeground: "#1D1D1F",
   link: "#197B56",
   faviconPlate: "#FFFFFF",
   success: "#007A43",
@@ -195,8 +195,8 @@ export const lightTokens = {
   bandLavender: "#E4DEF7",
   bandPeach: "#F9E3D3",
   overlay: "#00000080",
-  scrollbar: "#D5D9E0",
-  scrollbarHover: "#A9AFBB",
+  scrollbar: "#D6D6D6",
+  scrollbarHover: "#86868B",
 } as const satisfies ColorTokens;
 
 /** Web and Electron only: the primary fill's hover and disabled states. Mobile has no hover. */
@@ -212,12 +212,12 @@ export type WebColorTokens = ColorTokens & {
  */
 export const webDarkOverrides = {
   primaryHover: "#E2E2E5",
-  primaryDisabled: "#F4F4F529",
+  primaryDisabled: "#F5F5F729",
 } as const satisfies Partial<WebColorTokens>;
 
 export const webLightOverrides = {
-  primaryHover: "#2A2D35",
-  primaryDisabled: "#11131826",
+  primaryHover: "#3A3A3D",
+  primaryDisabled: "#1D1D1F26",
 } as const satisfies Partial<WebColorTokens>;
 
 export const webDarkTokens: WebColorTokens = { ...darkTokens, ...webDarkOverrides };
@@ -227,30 +227,26 @@ export const webLightTokens: WebColorTokens = { ...lightTokens, ...webLightOverr
 export const tokens = darkTokens;
 
 /**
- * Radii by role, in px: small controls (buttons, inputs, chips), cards, and the one main content
- * panel. `--radius` is the card step; the Tailwind steps in `@corvo/ui-web` derive from these.
+ * Radii by role, in px: pill controls (buttons, inputs), menu items and links, popovers and rows,
+ * cards and media, and the one main content panel. `--radius` is the card step; the Tailwind steps in `@corvo/ui-web`
+ * derive from these.
  */
-export const radius = { control: 10, card: 18, panel: 20 } as const;
+export const radius = { control: 9999, item: 10, surface: 16, card: 28, panel: 24 } as const;
 
 export const RADIUS = `${radius.card}px`;
 
 /**
- * Raised surfaces (panels, popovers, cards) share two layered, soft shadows per theme. Layers
- * stack a hairline ring, a close contact shadow and a wide ambient one; dark leans on the ring
- * because a shadow barely reads on a near-black page. Web only: native surfaces use system chrome.
+ * Raised surfaces are flat: panels and cards take a 1px hairline, and only floating overlays
+ * (popovers, menus) add one faint ambient shadow. Web only: native surfaces use system chrome.
  */
 export const elevation = {
   light: {
-    raised:
-      "0 0 0 1px rgb(17 19 24 / 0.03), 0 1px 2px rgb(17 19 24 / 0.03), 0 4px 16px rgb(17 19 24 / 0.04)",
-    overlay:
-      "0 0 0 1px rgb(17 19 24 / 0.04), 0 2px 4px rgb(17 19 24 / 0.03), 0 12px 32px rgb(17 19 24 / 0.08), 0 32px 64px rgb(17 19 24 / 0.05)",
+    raised: "0 0 0 1px rgb(29 29 31 / 0.08)",
+    overlay: "0 0 0 1px rgb(29 29 31 / 0.1), 0 8px 24px rgb(29 29 31 / 0.06)",
   },
   dark: {
-    raised:
-      "0 0 0 1px rgb(255 255 255 / 0.06), 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 12px rgb(0 0 0 / 0.3)",
-    overlay:
-      "0 0 0 1px rgb(255 255 255 / 0.08), 0 2px 4px rgb(0 0 0 / 0.4), 0 12px 32px rgb(0 0 0 / 0.5), 0 32px 64px rgb(0 0 0 / 0.35)",
+    raised: "0 0 0 1px rgb(255 255 255 / 0.08)",
+    overlay: "0 0 0 1px rgb(255 255 255 / 0.1), 0 8px 24px rgb(0 0 0 / 0.5)",
   },
 } as const;
 
@@ -285,10 +281,17 @@ export const motion = {
 } as const;
 
 /**
- * Page and section titles, in the Onest display weight with tight tracking. Sizes come
+ * Page and section titles, in the system display face with tight tracking. Sizes come
  * from the type scale; these are only what makes a title read as a title.
  */
-export const titleType = { weight: "500", tracking: "-0.025em", lineHeight: "1.15" } as const;
+export const titleType = { weight: "500", tracking: "-0.015em", lineHeight: "1.15" } as const;
+
+/** The web and Electron UI font: the system San Francisco first, so text looks native on Apple devices. */
+export const fontFamily =
+  '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", "Helvetica Neue", Arial, sans-serif';
+
+/** Body text tracks slightly tight; large headings tighter (see `titleType`). */
+export const bodyTracking = "-0.01em";
 
 export const fontWeight = { regular: "400", medium: "500", semibold: "600" } as const;
 
@@ -458,6 +461,10 @@ function renderBlock(selector: string, colorScheme: ResolvedAppearance, palette:
     `  --atmosphere-dither: ${atmosphere[colorScheme].dither};`,
     `  --radius: ${RADIUS};`,
     `  --radius-control: ${radius.control}px;`,
+    `  --radius-item: ${radius.item}px;`,
+    `  --radius-surface: ${radius.surface}px;`,
+    cssShadow("--font-ui", fontFamily),
+    `  --body-tracking: ${bodyTracking};`,
     `  --radius-card: ${radius.card}px;`,
     `  --radius-panel: ${radius.panel}px;`,
     `  --motion-fast: ${motion.fast};`,

@@ -12,8 +12,8 @@ export function warmWindowTtlMs(value: string | undefined) {
 // Keep in sync with webDarkTokens.background and webLightTokens.background from
 // @corvo/ui-tokens (asserted in tests). Do not import that package here: desktop packs
 // compiled JS only and ui-tokens is a TypeScript source / devDependency.
-const DARK_BACKGROUND = "#0A0A0A";
-const LIGHT_BACKGROUND = "#F4F5F7";
+const DARK_BACKGROUND = "#000000";
+const LIGHT_BACKGROUND = "#FFFFFF";
 
 /** The window paints before the web UI does, so it takes the scheme the UI will follow (the system one). */
 export function windowBackground(dark: boolean) {

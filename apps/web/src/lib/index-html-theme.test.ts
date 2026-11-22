@@ -50,14 +50,17 @@ describe("index.html theme bootstrap", () => {
 
   it("ships its own fonts instead of asking a font service for them", () => {
     const sans = read("../../../../packages/ui-web/src/styles.css");
-    expect(sans).toMatch(/--font-sans:\s*"Onest",/);
-    expect(sans).toMatch(/--font-display:\s*"Onest",/);
+    expect(sans).toMatch(/--font-sans:\s*var\(--font-ui\);/);
+    expect(sans).toMatch(/--font-display:\s*var\(--font-ui\);/);
+    expect(read("../../../../packages/ui-tokens/src/tokens.css")).toMatch(
+      /--font-ui:\s*-apple-system, BlinkMacSystemFont, "SF Pro Text"/,
+    );
     const app = read("../styles.css");
     const files = [...app.matchAll(/@font-face\s*{[^}]*url\("\/(fonts\/[^"]+\.woff2)"\)/g)].map(
       (match) => match[1],
     );
-    // Onest and IBM Plex Mono. Only the text face blocks first paint, so only it preloads.
-    expect(files).toHaveLength(2);
+    // Text uses the system font; only IBM Plex Mono is bundled, and it does not block first paint.
+    expect(files).toHaveLength(1);
     expect(sans).toMatch(/--font-mono:\s*"IBM Plex Mono",/);
     for (const file of files) {
       expect(existsSync(fileURLToPath(new URL(`../../public/${file}`, import.meta.url)))).toBe(

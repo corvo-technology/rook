@@ -26,7 +26,7 @@ function answer(body: unknown, ok = true): typeof fetch {
 beforeEach(() => {
   document.head.innerHTML = `
     <meta name="description" content="Your team of always-on agents." />
-    <meta name="theme-color" content="#0a0a0a" />
+    <meta name="theme-color" content="#000000" />
     <meta name="apple-mobile-web-app-title" content="Rook" />
     <link rel="icon" href="/favicon.ico" />
     <link rel="icon" href="/favicon.png" />

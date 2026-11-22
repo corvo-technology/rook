@@ -1053,7 +1053,7 @@ function SpaceShell({ page }: { page?: ReactNode }) {
         data-space-switch="main"
         aria-hidden={mobileSidebarOpen || undefined}
         inert={mobileSidebarOpen}
-        className={`isolate flex min-h-0 min-w-0 flex-1 flex-col bg-background ${embedded ? "overflow-hidden" : `md:my-3 md:me-3 md:overflow-hidden md:rounded-xl md:border md:border-border md:shadow-raised ${botsSidebarCollapsed ? "md:ms-3" : "md:ms-0"}`}`}
+        className={`isolate flex min-h-0 min-w-0 flex-1 flex-col bg-background ${embedded ? "overflow-hidden" : `md:my-3 md:me-3 md:overflow-hidden md:rounded-2xl md:border md:border-border md:shadow-raised ${botsSidebarCollapsed ? "md:ms-3" : "md:ms-0"}`}`}
       >
         {/* Inside main so the composer and its menus stay above it. */}
         {!mobileSidebarOpen ? (

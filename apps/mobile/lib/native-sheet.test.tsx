@@ -160,7 +160,8 @@ describe("Android sheet selection", () => {
       expect(mocks.styles).toContainEqual(
         expect.objectContaining({ backgroundColor: tokens.mutedForeground, opacity: 0.4 }),
       );
-      expect(tokens.card).not.toBe(tokens.background);
+      // The gallery light theme is white on white; only dark raises the sheet a step.
+      if (appearance === "dark") expect(tokens.card).not.toBe(tokens.background);
     },
   );
   it("removes only the native top inset and preserves bottom clearance", async () => {

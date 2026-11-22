@@ -6,17 +6,25 @@
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-/* Web type: Onest for text and headings (bundled by the app, with the system font as fallback) on a
-   15/22 base scale. Mobile sets its own type natively. */
+/* Web type: the system San Francisco stack for text and headings (tokens: --font-ui) on a 15/22 base
+   scale. Mobile sets its own type natively. */
 @theme {
-  --font-sans: "Onest", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-display: "Onest", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sans: var(--font-ui);
+  --font-display: var(--font-ui);
   /* Every transition in the app takes the shared motion tokens unless it sets its own. */
   --default-transition-duration: var(--motion-fast);
   --default-transition-timing-function: var(--motion-ease-out);
   --font-mono:
     "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
     "Courier New", monospace;
+  /* Flat: a stock shadow is a hairline, and floating layers add one faint ambient shadow. */
+  --shadow-2xs: none;
+  --shadow-xs: none;
+  --shadow-sm: var(--elevation-raised);
+  --shadow-md: var(--elevation-overlay);
+  --shadow-lg: var(--elevation-overlay);
+  --shadow-xl: var(--elevation-overlay);
+  --shadow-2xl: var(--elevation-overlay);
   --shadow-raised: var(--elevation-raised);
   --shadow-overlay: var(--elevation-overlay);
   --ease-out-soft: var(--motion-ease-out);
@@ -39,16 +47,16 @@
   --text-body1--line-height: var(--type-body1-line);
   --text-heading3: var(--type-heading3-size);
   --text-heading3--line-height: var(--type-heading3-line);
-  --text-heading3--letter-spacing: -0.008em;
+  --text-heading3--letter-spacing: -0.01em;
   --text-heading2: var(--type-heading2-size);
   --text-heading2--line-height: var(--type-heading2-line);
-  --text-heading2--letter-spacing: -0.012em;
+  --text-heading2--letter-spacing: -0.015em;
   --text-heading1: var(--type-heading1-size);
   --text-heading1--line-height: var(--type-heading1-line);
   --text-heading1--letter-spacing: -0.015em;
 }
 
-/* A page title: Onest, tight tracking (tokens: --title-*). Section titles keep the text-heading sizes. */
+/* A page title: system face, tight tracking (tokens: --title-*). Section titles keep the text-heading sizes. */
 @utility text-title {
   font-family: var(--font-display);
   font-size: 28px;
@@ -137,12 +145,13 @@
   --color-overlay: var(--overlay);
   --color-scrollbar: var(--scrollbar);
   --color-scrollbar-hover: var(--scrollbar-hover);
-  /* By role: sm is a small control, lg a card, xl the main content panel. */
+  /* By role: sm is a pill control, md a menu item or link, lg a popover or row, xl a card, 2xl the main
+     content panel. */
   --radius-sm: var(--radius-control);
-  --radius-md: calc(var(--radius) - 4px);
-  --radius-lg: var(--radius-card);
-  --radius-xl: var(--radius-panel);
-  --radius-2xl: calc(var(--radius-panel) + 4px);
+  --radius-md: var(--radius-item);
+  --radius-lg: var(--radius-surface);
+  --radius-xl: var(--radius-card);
+  --radius-2xl: var(--radius-panel);
   --animate-caret-blink: caret-blink 1.25s ease-out infinite;
 
   @keyframes caret-blink {
@@ -164,6 +173,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    letter-spacing: var(--body-tracking);
   }
   /* Titles and section headings use the display face; the size tokens set the rest. */
   :is(h1, h2, h3, h4, [class*="text-heading"]) {

@@ -20,7 +20,7 @@ import { authErrorText, credentialIssueText } from "../lib/user-error";
 
 type AuthMode = "in" | "up" | "forgot";
 
-const fieldClass = "mt-2 h-12 rounded-xl px-4 text-base md:text-base";
+const fieldClass = "mt-2 h-12 rounded-full px-4 text-base md:text-base";
 const CODE_LENGTH = 6;
 export const submitClass = "mt-3 h-12 w-full rounded-xl text-base";
 /** The main action takes the app's ink; green stays the color of the bots. */

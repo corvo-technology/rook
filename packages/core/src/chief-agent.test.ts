@@ -7,7 +7,7 @@ import { MESSAGING_PROVIDER_IDS } from "./messaging-providers.js";
 describe("the Chief", () => {
   it("is Rook in every language, with the title in the person's own", () => {
     expect(CHIEF_AGENT.name).toEqual({ en: "Rook", "pt-BR": "Rook" });
-    expect(CHIEF_AGENT.title).toEqual({ en: "your right hand", "pt-BR": "seu braço direito" });
+    expect(CHIEF_AGENT.title).toEqual({ en: "Right hand", "pt-BR": "Braço direito" });
     expect(CHIEF_AGENT.description.en).not.toBe(CHIEF_AGENT.description["pt-BR"]);
     expect(CHIEF_AGENT.description.en).toContain("right hand");
     expect(CHIEF_AGENT.description["pt-BR"]).toContain("braço direito");

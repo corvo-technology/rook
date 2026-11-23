@@ -33,10 +33,17 @@ tools, workspace and reply guidance), so it does not change between turns. Memor
 connections and skills travel as one live context block in the transcript, right before the user
 message of the turn that first sent it; later turns replay it there and add a new block only when
 its text changed. Everything that belongs to one run alone (current time, reply target, approvals,
-recalled memory, ticket matches, routing hints) follows the user message as a turn note and is
+recalled memory, ticket matches, routing hints, the active-work block) follows the user message as a turn note and is
 never replayed. The runtime keeps an in-memory record per thread of what the last turn showed and
 starts fresh when a message was edited, removed or inserted, the setup changed, the last turn did
 not end well, or the connection's cache window has elapsed.
+
+The active-work block lists what an agent still has open in the space: asks waiting on the owner,
+work it delegated that is still running, and its tickets in progress or in review, with a nudge on
+tickets quiet for a day. It is read from the database on every turn and never stored, so it cannot
+go stale. It lives in the turn note, not the live context block, because it changes between turns
+and would otherwise invalidate the cached prefix each time. It is capped at ten lines and omitted
+when nothing is open.
 
 ## Timing
 

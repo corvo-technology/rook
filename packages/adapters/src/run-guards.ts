@@ -2,6 +2,12 @@ import type { AgentToolExecutionObserver } from "@corvo/adapter-kit";
 import type { TurnGuardKind } from "@corvo/contracts";
 import { TURN_GUARD_RUN_ERRORS } from "@corvo/core";
 import { isToolPauseResult } from "./approval-effect.js";
+import {
+  EMPTY_GUARD_STATE,
+  type RunGuardState,
+  restoreCallState,
+  saveCallState,
+} from "./guard-state.js";
 import { idleSleepSeconds } from "./idle-sleep.js";
 import {
   newStallWatch,
@@ -39,7 +45,17 @@ export interface RunGuards {
   readonly stopped: TurnGuardKind | undefined;
   /** Rejects once a guard halts the run, so a stream that never ends cannot outlive the stop. */
   readonly stop: Promise<never>;
+  /** Set when the attempt ends waiting for a person: their answer is progress, so loop counters restart. */
+  humanWait: boolean;
+  /** Called after each tool call finishes, a safe point to save the counters. */
+  onStepEnd?: () => void;
   halt(kind: TurnGuardKind, detail?: Record<string, string | number>): void;
+  /** Counts one tool-call step against the run totals. True when that stopped the run. */
+  step(): boolean;
+  /** Time the run has been active over every attempt so far. */
+  activeMs(): number;
+  /** What to save so the next attempt of this run continues these counters. */
+  snapshot(open: boolean): RunGuardState;
   /** Records a sign of life. */
   sign(): void;
   dispose(): void;
@@ -49,11 +65,24 @@ export function createRunGuards(options: {
   abort: () => void;
   limits?: Partial<TurnGuardLimits>;
   now?: () => number;
+  /** What earlier attempts of this run saved. */
+  restored?: RunGuardState;
+  /** Tokens the run has spent, to tell a connection that reports no usage from one that does. */
+  tokensSpent?: () => number;
   onHalt?: (kind: TurnGuardKind, detail: Record<string, string | number>) => void;
 }): RunGuards {
   const limits: TurnGuardLimits = { ...TURN_GUARD_LIMITS, ...options.limits };
   const now = options.now ?? Date.now;
   const stall = newStallWatch(now());
+  const startedAt = now();
+  const restored = options.restored ?? EMPTY_GUARD_STATE;
+  const totals = {
+    steps: restored.steps,
+    before: restored.activeMs,
+    // An attempt that never reached a clean exit died with its worker.
+    crashes: restored.open ? restored.crashes + 1 : 0,
+  };
+  const activeMs = () => totals.before + Math.max(0, now() - startedAt);
   let stopped: TurnGuardKind | undefined;
   let disposed = false;
   let rejectStop: (error: TurnGuardStopError) => void = () => undefined;
@@ -64,13 +93,15 @@ export function createRunGuards(options: {
   const timer = setInterval(() => {
     if (stallTick(stall, now(), limits)) {
       guards.halt("stall", { "guard.silent_ms": now() - stall.lastSignAt });
+    } else if (activeMs() > limits.runActiveMs) {
+      guards.halt("loop", { "guard.active_ms": activeMs() });
     }
   }, limits.stallTickMs);
   timer.unref();
 
   const guards: RunGuards = {
     limits,
-    calls: newCallGuardState(),
+    calls: restoreCallState(restored.calls),
     stall,
     now,
     get stopped() {
@@ -85,6 +116,30 @@ export function createRunGuards(options: {
       options.abort();
       clearInterval(timer);
     },
+    humanWait: false,
+    step() {
+      totals.steps += 1;
+      const unmetered = options.tokensSpent !== undefined && options.tokensSpent() === 0;
+      if (
+        totals.steps > limits.runStepsStop ||
+        (unmetered && totals.steps > limits.unmeteredStepsStop)
+      ) {
+        guards.halt("loop", { "guard.steps": totals.steps });
+      }
+      return stopped !== undefined;
+    },
+    activeMs,
+    snapshot(open) {
+      // A person answering is progress: loop counters restart, the run totals do not.
+      const fresh = guards.humanWait && !open;
+      return {
+        steps: totals.steps,
+        activeMs: activeMs(),
+        crashes: open ? totals.crashes : 0,
+        open,
+        calls: fresh ? EMPTY_GUARD_STATE.calls : saveCallState(guards.calls),
+      };
+    },
     sign() {
       stallSign(stall, now());
     },
@@ -93,8 +148,16 @@ export function createRunGuards(options: {
       clearInterval(timer);
     },
   };
+  if (totals.crashes >= limits.crashLoopStop)
+    guards.halt("stall", { "guard.crashes": totals.crashes });
+  else if (totals.steps >= limits.runStepsStop || activeMs() > limits.runActiveMs) {
+    guards.halt("loop", { "guard.steps": totals.steps, "guard.active_ms": activeMs() });
+  }
   return guards;
 }
+
+/** Read by the model, not shown as UI. */
+const RUN_LIMIT_REFUSAL = "Not run: this run reached its limit. Say what is left.";
 
 /** Adds a note for the model to a tool result without changing what the result says. */
 export function withGuardNote(result: unknown, note: string): unknown {
@@ -121,6 +184,7 @@ export async function guardedToolCall(
   run: (observer: AgentToolExecutionObserver | undefined) => Promise<unknown>,
 ): Promise<unknown> {
   const { guards } = target;
+  if (guards.step()) return { error: RUN_LIMIT_REFUSAL };
   const before = beforeCall(
     guards.calls,
     {
@@ -170,6 +234,7 @@ export async function guardedToolCall(
       guards.limits,
     );
     if (after.stop) guards.halt(after.stop, { "guard.tool": name });
+    guards.onStepEnd?.();
     const note = before.note ?? after.note;
     return note ? withGuardNote(result, note) : result;
   } finally {

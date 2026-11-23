@@ -12,6 +12,14 @@ export const TURN_GUARD_LIMITS = {
   idleSleepsFree: 1,
   stallMs: 1_200_000,
   stallTickMs: 15_000,
+  // Totals for the whole run, summed over every attempt. A person's answer starts a new
+  // attempt but never resets them.
+  runStepsStop: 500,
+  runActiveMs: 14_400_000,
+  // Tool-call steps allowed when the connection reports no token counts, so no budget applies.
+  unmeteredStepsStop: 150,
+  // Consecutive attempts that ended without a clean exit (crash or lease expiry).
+  crashLoopStop: 3,
 } as const;
 export type TurnGuardLimits = Record<keyof typeof TURN_GUARD_LIMITS, number>;
 

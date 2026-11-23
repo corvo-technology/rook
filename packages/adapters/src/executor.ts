@@ -127,6 +127,7 @@ import type { ExecutorDeps } from "./executor-deps.js";
 import { fleetGrantsFor } from "./fleet-grants.js";
 import type { FleetRun } from "./fleet-tools.js";
 import { lastRunAtByBot, loadBotGroups, loadGroupContext } from "./group-handoff.js";
+import { parseGuardState } from "./guard-state.js";
 import {
   capHistoryTokens,
   formatCompactedSummary,
@@ -293,6 +294,9 @@ import { createWebProvider } from "./web-provider-factory.js";
 import { loadWikiIndexContext } from "./wiki-context.js";
 import { wikiOfferInstruction } from "./wiki-offer.js";
 
+/** How often the guard counters are saved while an attempt runs. */
+const GUARD_SAVE_INTERVAL_MS = 5_000;
+
 export function createRunExecutor(deps: ExecutorDeps) {
   const contextStrategy = deps.contextStrategy ?? DEFAULT_CONTEXT_STRATEGY;
   const web = deps.web ?? createWebProvider();
@@ -455,6 +459,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
       const cacheMisses = new CacheMissTracker();
       let runAbortController: AbortController | null = null;
       let guardsToDispose: RunGuards | undefined;
+      let saveGuardsNow: ((open: boolean) => Promise<void>) | undefined;
       const runningHelpers = new Map<string, RunningHelper>();
       const settleHelpers = () => settleRunningHelpers(deps, run, runningHelpers);
 
@@ -1480,10 +1485,29 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const guards = createRunGuards({
           abort: () => runAbortController?.abort(),
           limits: deps.turnGuardLimits,
+          restored: parseGuardState(run.guardState),
+          tokensSpent: () => state.replyBudget.spent,
           onHalt: (kind, detail) =>
             getLogger().warn("run.guard_stopped", { "guard.kind": kind, ...detail }),
         });
         guardsToDispose = guards;
+        // Saved while the attempt runs (at most every few seconds), so a crash loses little.
+        let guardsSavedAt = 0;
+        saveGuardsNow = (open) =>
+          deps.prisma.run
+            .updateMany({
+              // Fence only: a pause or hand-back already cleared the lease owner.
+              where: { id: runId, leaseFence: fence },
+              data: { guardState: guards.snapshot(open) },
+            })
+            .then(() => undefined);
+        guards.onStepEnd = () => {
+          const at = Date.now();
+          if (at - guardsSavedAt < GUARD_SAVE_INTERVAL_MS) return;
+          guardsSavedAt = at;
+          void saveGuardsNow?.(true).catch(() => undefined);
+        };
+        await saveGuardsNow(true).catch(() => undefined);
         const state: RunState = {
           lease,
           computerUse,
@@ -1962,6 +1986,8 @@ export function createRunExecutor(deps: ExecutorDeps) {
 
         try {
           if (checkpointLoadError) throw checkpointLoadError;
+          // Totals from earlier attempts may already be past a limit (a crash loop, a long run).
+          if (guards.stopped) throw new TurnGuardStopError(guards.stopped);
           const runtimeEvents = deps.runtime.run(
             {
               botId: bot.id,
@@ -2329,6 +2355,11 @@ export function createRunExecutor(deps: ExecutorDeps) {
           ready: Boolean(computerUse.screenRelease),
         });
         detachShutdown?.();
+        // A clean exit (finished, paused, drained or failed) saves the counters closed; a crash
+        // never gets here, so the next attempt finds them open.
+        if (guardsToDispose) {
+          await saveGuardsNow?.(false).catch(() => undefined);
+        }
         guardsToDispose?.dispose();
         clearInterval(heartbeat);
         await releaseComputer();

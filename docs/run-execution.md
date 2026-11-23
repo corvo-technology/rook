@@ -134,6 +134,9 @@ overrides them for the composition root and tests only.
 | Errors | 8 tool calls fail in a row, whatever they are. A failure is a thrown error, an `error` field or `isError: true`; a shell command that exits non-zero is a result. One success resets the count. |
 | Stall | 20 minutes pass with no sign of life while no tool is in flight. |
 | Waiting | A `shell` command that only sleeps 20 seconds or more (followed at most by `echo`, `printf`, `true`, `:` or `date`) was already run once; each later one is refused, and the 4th refusal stops the run. A sleep followed by a real check, or inside a loop, always runs. |
+| Run length | The run has taken 500 tool-call steps, or been active for 4 hours, summed over all its attempts. Ends as `loop`. |
+| Unmetered | The model connection reported no token counts in the run (some subscription and OAuth connections, so no token budget can apply) and the run took 150 tool-call steps. Ends as `loop`. |
+| Crash loop | 3 attempts in a row ended without a clean exit (worker crash, lease expiry). Ends as `stall`. |
 | Per-tool counter | A read-only connector tool is called past 60 times in a run: further calls are refused (a note on the 15th asks for narrower requests) and the 4th refusal stops the run as a loop. Built-in tools and tools not declared read-only are never counted. |
 
 Signs of life are any runtime event (text, progress, tool start, sub-agent
@@ -141,13 +144,29 @@ progress, usage) and any tool call starting or finishing. A tool in flight, a
 shell command still running in the background and an approval being reviewed all
 count as in flight. A gap between two watch ticks longer than four ticks plus 30
 seconds means the machine was suspended: the silence clock restarts and the gap
-never counts. The stall guard measures silence, not duration, so the sentence
-"Active model streams have no new duration limit" still holds.
+never counts. The stall guard measures silence, not duration; the run length guard is the only
+limit on how long a run may be active in total.
 
-Guard state lives in memory for one attempt and is shared with sub-agents, whose
-tool calls go through the same boundary. A run that paused for a person or that
-another worker recovers starts its counters at zero. A stop ends the run through
-the normal failure path with one of four fixed sentences, matched by exact
+Guard state is shared with sub-agents, whose tool calls go through the same boundary. It is
+saved in the nullable `runs.guardState` column (while an attempt runs at most every 5 seconds
+after a tool call, and again when the attempt exits) and loaded when the next attempt starts, so a
+pause, a deploy hand-back or a worker that crashed does not reset it. The column is optional for
+older releases: they neither read nor write it.
+
+- **Run totals** (steps, active time) never reset. Active time is the time attempts ran; the time a
+  run waits for a person or in the queue is not counted. Steps are tool calls through the guard
+  boundary, refused calls included.
+- **Loop counters** (the failure streak, identical-result repeats, per-tool counts, refused calls
+  and idle sleeps) carry across a re-claim, a drain and a crash. They restart when the attempt ended
+  waiting for a person (an answer, an approval, a secret or a takeover), because the person's
+  reply is progress.
+- **Crash streak.** An attempt saves its state as open and closes it on any clean exit (finished,
+  paused, drained or failed). The next attempt that finds it still open counts one crash; a clean
+  exit resets the streak.
+- A run that starts already past one of these limits fails before the model.
+
+A stop ends the run through
+the normal failure path with one of the four fixed sentences, matched by exact
 equality, that map to the run error kinds `loop`, `tool_errors`, `stall` and
 `waiting`, and are also saved in the nullable `runs.stopReason` column. Text the
 person already saw stream stays above the sentence. A stopped routine run is not
@@ -207,8 +226,8 @@ whether a run may start, and no agent tool can read or change either setting.
 page counts them: `totalTokens`, else `inputTokens + outputTokens`, else 0. Cached reads
 are included, no money conversion is made, and a call that reports no token counts (some
 subscription and OAuth connections) counts as 0. A bot on such a connection is never
-blocked by a limit it cannot be measured against; it stays bounded by the tool loop
-guards and the provider's own quota windows. The month is the UTC calendar month. A
+blocked by a token limit it cannot be measured against; it stays bounded by the unmetered step
+cap of the turn guards, the other turn guards and the provider's own quota windows. The month is the UTC calendar month. A
 limit that is empty, `0`, negative or not a finite number means no limit.
 
 **Monthly gate.** A run of a bot whose month is at or over its limit fails before the

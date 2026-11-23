@@ -1253,6 +1253,8 @@ model Run {
   error                String?
   // Set when a rule of the app or a run guard ended the run on purpose (RUN_STOP_REASONS); null otherwise.
   stopReason           String?
+  /// What the run guards counted so far (RunGuardState), kept so a pause, crash or deploy does not reset them; null until an attempt saves it.
+  guardState           Json?
   /// The failure as a code plus params (RunErrorInfo), so clients word it in the viewer's language; null on older runs.
   errorInfo            Json?
   leaseOwner           String?

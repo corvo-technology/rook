@@ -13,6 +13,7 @@ import { redactConnectorPayload } from "./connector-safety.js";
 import { MAX_RECALLED_MEMORIES } from "./history-compaction.js";
 import { appendMemoryFact } from "./memory-tools.js";
 import type { RunContext } from "./run-context.js";
+import { isRunTainted } from "./run-context.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
 import { postMemoryFactCard } from "./user-memory-run.js";
 import { startAttachedFileImport } from "./wiki-import-run.js";
@@ -87,6 +88,9 @@ export const memoryTools: ToolHandlers = {
       });
     const fact = cleanUserFact(call.args.fact);
     if (!fact) return call.finish({ error: "fact must be one short sentence about the person." });
+    // Saving on its own is for what the person said in their own run. Once outside content entered
+    // it, the fact may have come from that content, so the person confirms it like any suggestion.
+    const saveNow = mode === "auto" && !(await isRunTainted(ctx));
     const result = await proposeUserMemory(
       deps.prisma,
       { spaceId: run.spaceId, userId: run.userId },
@@ -94,7 +98,7 @@ export const memoryTools: ToolHandlers = {
         text: fact,
         source: "agent",
         // Asking first is the default: nothing is stored as known before the person says Save.
-        state: mode === "auto" ? "saved" : "pending",
+        state: saveNow ? "saved" : "pending",
         botId: bot.id,
         threadId: thread.id,
       },
@@ -114,7 +118,7 @@ export const memoryTools: ToolHandlers = {
     await postMemoryFactCard(deps, thread, bot.id, result.memory);
     return call.finish({
       ok: true,
-      status: mode === "auto" ? "kept" : "waiting for the person to save it",
+      status: saveNow ? "kept" : "waiting for the person to save it",
     });
   },
   async recall_about_user(ctx, call) {

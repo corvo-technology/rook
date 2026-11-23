@@ -6,8 +6,8 @@
   "rubricVersion": "harness-prose-v1",
   "tokenEstimator": "adapters/context-selection estimateTextTokens",
   "cacheSimulation": "prefix-cache-v2",
-  "startedAt": "2026-11-21T01:29:06.476Z",
-  "codeRevision": "ff9da639f21fc31fd6182583ac9cadd67b242f29",
+  "startedAt": "2026-11-23T23:28:20.693Z",
+  "codeRevision": "3827bd3d93d918fce7ea3b0eb18b8b330c63ca84",
   "subject": null,
   "judgeCostUsd": null,
   "subjectCostUsd": null,
@@ -16,7 +16,9 @@
     {
       "id": "quick-question",
       "tier": "fast",
-      "tiers": ["fast"],
+      "tiers": [
+        "fast"
+      ],
       "status": "pass",
       "checks": [
         {
@@ -36,21 +38,23 @@
       "metrics": {
         "inputTokens": 20,
         "cacheReadTokens": 0,
-        "cacheWriteTokens": 8228,
+        "cacheWriteTokens": 6032,
         "outputTokens": 11,
         "modelCalls": 1,
         "toolCalls": 0,
-        "schemaTokensPerCall": 8100,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 1406,
-        "firstVisibleTextMs": 1334
+        "schemaTokensPerCall": 5904,
+        "schemaTokensFirstCall": 5904,
+        "wallMs": 896,
+        "firstVisibleTextMs": 870
       },
       "error": null
     },
     {
       "id": "greeting",
       "tier": "fast",
-      "tiers": ["fast"],
+      "tiers": [
+        "fast"
+      ],
       "status": "pass",
       "checks": [
         {
@@ -73,21 +77,23 @@
       "metrics": {
         "inputTokens": 14,
         "cacheReadTokens": 0,
-        "cacheWriteTokens": 8228,
+        "cacheWriteTokens": 6032,
         "outputTokens": 11,
         "modelCalls": 1,
         "toolCalls": 0,
-        "schemaTokensPerCall": 8100,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 140,
-        "firstVisibleTextMs": 139
+        "schemaTokensPerCall": 5904,
+        "schemaTokensFirstCall": 5904,
+        "wallMs": 57,
+        "firstVisibleTextMs": 55
       },
       "error": null
     },
     {
       "id": "ticket-continuation-after-wait",
       "tier": "main",
-      "tiers": ["main"],
+      "tiers": [
+        "main"
+      ],
       "status": "pass",
       "checks": [
         {
@@ -106,22 +112,24 @@
       "prose": null,
       "metrics": {
         "inputTokens": 93,
-        "cacheReadTokens": 8184,
-        "cacheWriteTokens": 8213,
+        "cacheReadTokens": 6050,
+        "cacheWriteTokens": 6079,
         "outputTokens": 31,
         "modelCalls": 2,
         "toolCalls": 1,
-        "schemaTokensPerCall": 8025,
-        "schemaTokensFirstCall": 8025,
-        "wallMs": 190,
-        "firstVisibleTextMs": 187
+        "schemaTokensPerCall": 5891,
+        "schemaTokensFirstCall": 5891,
+        "wallMs": 60,
+        "firstVisibleTextMs": 58
       },
       "error": null
     },
     {
       "id": "web-lookup",
       "tier": "main",
-      "tiers": ["main"],
+      "tiers": [
+        "main"
+      ],
       "status": "pass",
       "checks": [
         {
@@ -143,22 +151,24 @@
       },
       "metrics": {
         "inputTokens": 130,
-        "cacheReadTokens": 16622,
-        "cacheWriteTokens": 8348,
+        "cacheReadTokens": 12230,
+        "cacheWriteTokens": 6152,
         "outputTokens": 58,
         "modelCalls": 3,
         "toolCalls": 2,
-        "schemaTokensPerCall": 8100,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 185,
-        "firstVisibleTextMs": 182
+        "schemaTokensPerCall": 5904,
+        "schemaTokensFirstCall": 5904,
+        "wallMs": 67,
+        "firstVisibleTextMs": 65
       },
       "error": null
     },
     {
       "id": "multi-step-report",
       "tier": "main",
-      "tiers": ["main"],
+      "tiers": [
+        "main"
+      ],
       "status": "pass",
       "checks": [
         {
@@ -177,22 +187,24 @@
       "prose": null,
       "metrics": {
         "inputTokens": 159,
-        "cacheReadTokens": 25177,
-        "cacheWriteTokens": 8498,
+        "cacheReadTokens": 18589,
+        "cacheWriteTokens": 6302,
         "outputTokens": 97,
         "modelCalls": 4,
         "toolCalls": 4,
-        "schemaTokensPerCall": 8100,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 312,
-        "firstVisibleTextMs": 159
+        "schemaTokensPerCall": 5904,
+        "schemaTokensFirstCall": 5904,
+        "wallMs": 65,
+        "firstVisibleTextMs": 64
       },
       "error": null
     },
     {
       "id": "long-batch-checkpoint",
       "tier": "main",
-      "tiers": ["main"],
+      "tiers": [
+        "main"
+      ],
       "status": "pass",
       "checks": [
         {
@@ -219,22 +231,24 @@
       "prose": null,
       "metrics": {
         "inputTokens": 356,
-        "cacheReadTokens": 64355,
-        "cacheWriteTokens": 9812,
+        "cacheReadTokens": 48983,
+        "cacheWriteTokens": 7616,
         "outputTokens": 558,
         "modelCalls": 8,
         "toolCalls": 16,
-        "schemaTokensPerCall": 8100,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 521,
-        "firstVisibleTextMs": 513
+        "schemaTokensPerCall": 5904,
+        "schemaTokensFirstCall": 5904,
+        "wallMs": 64,
+        "firstVisibleTextMs": 62
       },
       "error": null
     },
     {
       "id": "routine-tick-silent",
       "tier": "fast",
-      "tiers": ["fast"],
+      "tiers": [
+        "fast"
+      ],
       "status": "pass",
       "checks": [
         {
@@ -256,15 +270,15 @@
       ],
       "prose": null,
       "metrics": {
-        "inputTokens": 1071,
-        "cacheReadTokens": 29086,
-        "cacheWriteTokens": 7191,
+        "inputTokens": 108,
+        "cacheReadTokens": 5767,
+        "cacheWriteTokens": 5769,
         "outputTokens": 22,
-        "modelCalls": 5,
+        "modelCalls": 2,
         "toolCalls": 1,
-        "schemaTokensPerCall": 6999,
-        "schemaTokensFirstCall": 6999,
-        "wallMs": 136,
+        "schemaTokensPerCall": 5577,
+        "schemaTokensFirstCall": 5577,
+        "wallMs": 25,
         "firstVisibleTextMs": null
       },
       "error": null
@@ -272,7 +286,9 @@
     {
       "id": "routine-tick-change",
       "tier": "fast",
-      "tiers": ["fast"],
+      "tiers": [
+        "fast"
+      ],
       "status": "pass",
       "checks": [
         {
@@ -298,22 +314,24 @@
       },
       "metrics": {
         "inputTokens": 143,
-        "cacheReadTokens": 14501,
-        "cacheWriteTokens": 7257,
+        "cacheReadTokens": 11657,
+        "cacheWriteTokens": 5835,
         "outputTokens": 65,
         "modelCalls": 3,
         "toolCalls": 2,
-        "schemaTokensPerCall": 6999,
-        "schemaTokensFirstCall": 6999,
-        "wallMs": 182,
-        "firstVisibleTextMs": 180
+        "schemaTokensPerCall": 5577,
+        "schemaTokensFirstCall": 5577,
+        "wallMs": 39,
+        "firstVisibleTextMs": 38
       },
       "error": null
     },
     {
       "id": "handoff-to-agent",
       "tier": "main",
-      "tiers": ["main"],
+      "tiers": [
+        "main"
+      ],
       "status": "pass",
       "checks": [
         {
@@ -335,23 +353,25 @@
       ],
       "prose": null,
       "metrics": {
-        "inputTokens": 474,
-        "cacheReadTokens": 16981,
-        "cacheWriteTokens": 8392,
+        "inputTokens": 502,
+        "cacheReadTokens": 12617,
+        "cacheWriteTokens": 6196,
         "outputTokens": 90,
         "modelCalls": 3,
         "toolCalls": 2,
-        "schemaTokensPerCall": 8100,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 176,
-        "firstVisibleTextMs": 161
+        "schemaTokensPerCall": 5904,
+        "schemaTokensFirstCall": 5904,
+        "wallMs": 49,
+        "firstVisibleTextMs": 48
       },
       "error": null
     },
     {
       "id": "approval-gated-send",
       "tier": "main",
-      "tiers": ["main"],
+      "tiers": [
+        "main"
+      ],
       "status": "pass",
       "checks": [
         {
@@ -375,21 +395,23 @@
       "metrics": {
         "inputTokens": 25,
         "cacheReadTokens": 0,
-        "cacheWriteTokens": 8336,
+        "cacheWriteTokens": 6140,
         "outputTokens": 42,
         "modelCalls": 1,
         "toolCalls": 1,
-        "schemaTokensPerCall": 8208,
-        "schemaTokensFirstCall": 8208,
-        "wallMs": 30,
-        "firstVisibleTextMs": 29
+        "schemaTokensPerCall": 6012,
+        "schemaTokensFirstCall": 6012,
+        "wallMs": 16,
+        "firstVisibleTextMs": 15
       },
       "error": null
     },
     {
       "id": "email-triage",
       "tier": "main",
-      "tiers": ["main"],
+      "tiers": [
+        "main"
+      ],
       "status": "pass",
       "checks": [
         {
@@ -412,22 +434,24 @@
       "prose": null,
       "metrics": {
         "inputTokens": 341,
-        "cacheReadTokens": 17285,
-        "cacheWriteTokens": 8710,
+        "cacheReadTokens": 12893,
+        "cacheWriteTokens": 6514,
         "outputTokens": 159,
         "modelCalls": 3,
         "toolCalls": 3,
-        "schemaTokensPerCall": 8311,
-        "schemaTokensFirstCall": 8311,
-        "wallMs": 117,
-        "firstVisibleTextMs": 113
+        "schemaTokensPerCall": 6115,
+        "schemaTokensFirstCall": 6115,
+        "wallMs": 41,
+        "firstVisibleTextMs": 39
       },
       "error": null
     },
     {
       "id": "calendar-conflict",
       "tier": "main",
-      "tiers": ["main"],
+      "tiers": [
+        "main"
+      ],
       "status": "pass",
       "checks": [
         {
@@ -446,22 +470,24 @@
       "prose": null,
       "metrics": {
         "inputTokens": 122,
-        "cacheReadTokens": 8481,
-        "cacheWriteTokens": 8545,
+        "cacheReadTokens": 6285,
+        "cacheWriteTokens": 6349,
         "outputTokens": 123,
         "modelCalls": 2,
         "toolCalls": 2,
-        "schemaTokensPerCall": 8317,
-        "schemaTokensFirstCall": 8317,
-        "wallMs": 158,
-        "firstVisibleTextMs": 152
+        "schemaTokensPerCall": 6121,
+        "schemaTokensFirstCall": 6121,
+        "wallMs": 22,
+        "firstVisibleTextMs": 21
       },
       "error": null
     },
     {
       "id": "memory-recall",
       "tier": "fast",
-      "tiers": ["fast"],
+      "tiers": [
+        "fast"
+      ],
       "status": "pass",
       "checks": [
         {
@@ -480,22 +506,24 @@
       "prose": null,
       "metrics": {
         "inputTokens": 57,
-        "cacheReadTokens": 8246,
-        "cacheWriteTokens": 8285,
+        "cacheReadTokens": 6050,
+        "cacheWriteTokens": 6089,
         "outputTokens": 30,
         "modelCalls": 2,
         "toolCalls": 1,
-        "schemaTokensPerCall": 8100,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 212,
-        "firstVisibleTextMs": 210
+        "schemaTokensPerCall": 5904,
+        "schemaTokensFirstCall": 5904,
+        "wallMs": 19,
+        "firstVisibleTextMs": 18
       },
       "error": null
     },
     {
       "id": "wiki-lookup",
       "tier": "main",
-      "tiers": ["main"],
+      "tiers": [
+        "main"
+      ],
       "status": "pass",
       "checks": [
         {
@@ -514,22 +542,24 @@
       "prose": null,
       "metrics": {
         "inputTokens": 103,
-        "cacheReadTokens": 16577,
-        "cacheWriteTokens": 8339,
+        "cacheReadTokens": 12185,
+        "cacheWriteTokens": 6143,
         "outputTokens": 53,
         "modelCalls": 3,
         "toolCalls": 2,
-        "schemaTokensPerCall": 8100,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 321,
-        "firstVisibleTextMs": 276
+        "schemaTokensPerCall": 5904,
+        "schemaTokensFirstCall": 5904,
+        "wallMs": 27,
+        "firstVisibleTextMs": 26
       },
       "error": null
     },
     {
       "id": "ambiguous-request",
       "tier": "fast",
-      "tiers": ["fast"],
+      "tiers": [
+        "fast"
+      ],
       "status": "pass",
       "checks": [
         {
@@ -556,21 +586,24 @@
       "metrics": {
         "inputTokens": 56,
         "cacheReadTokens": 0,
-        "cacheWriteTokens": 8336,
+        "cacheWriteTokens": 6140,
         "outputTokens": 21,
         "modelCalls": 1,
         "toolCalls": 0,
-        "schemaTokensPerCall": 8208,
-        "schemaTokensFirstCall": 8208,
-        "wallMs": 109,
-        "firstVisibleTextMs": 91
+        "schemaTokensPerCall": 6012,
+        "schemaTokensFirstCall": 6012,
+        "wallMs": 15,
+        "firstVisibleTextMs": 14
       },
       "error": null
     },
     {
       "id": "needs-stronger-model",
       "tier": "main",
-      "tiers": ["main", "strong"],
+      "tiers": [
+        "main",
+        "strong"
+      ],
       "status": "pass",
       "checks": [
         {
@@ -590,21 +623,23 @@
       "metrics": {
         "inputTokens": 102,
         "cacheReadTokens": 0,
-        "cacheWriteTokens": 16313,
+        "cacheWriteTokens": 11921,
         "outputTokens": 180,
         "modelCalls": 2,
         "toolCalls": 1,
-        "schemaTokensPerCall": 8029,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 57,
-        "firstVisibleTextMs": 25
+        "schemaTokensPerCall": 5833,
+        "schemaTokensFirstCall": 5904,
+        "wallMs": 25,
+        "firstVisibleTextMs": 12
       },
       "error": null
     },
     {
       "id": "long-history-followup",
       "tier": "fast",
-      "tiers": ["fast"],
+      "tiers": [
+        "fast"
+      ],
       "status": "pass",
       "checks": [
         {
@@ -624,21 +659,23 @@
       "metrics": {
         "inputTokens": 227,
         "cacheReadTokens": 0,
-        "cacheWriteTokens": 8228,
+        "cacheWriteTokens": 6032,
         "outputTokens": 16,
         "modelCalls": 1,
         "toolCalls": 0,
-        "schemaTokensPerCall": 8100,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 31,
-        "firstVisibleTextMs": 30
+        "schemaTokensPerCall": 5904,
+        "schemaTokensFirstCall": 5904,
+        "wallMs": 14,
+        "firstVisibleTextMs": 13
       },
       "error": null
     },
     {
       "id": "large-tool-result",
       "tier": "main",
-      "tiers": ["main"],
+      "tiers": [
+        "main"
+      ],
       "status": "pass",
       "checks": [
         {
@@ -657,22 +694,24 @@
       "prose": null,
       "metrics": {
         "inputTokens": 2284,
-        "cacheReadTokens": 8261,
-        "cacheWriteTokens": 8287,
+        "cacheReadTokens": 6065,
+        "cacheWriteTokens": 6091,
         "outputTokens": 28,
         "modelCalls": 2,
         "toolCalls": 1,
-        "schemaTokensPerCall": 8100,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 267,
-        "firstVisibleTextMs": 263
+        "schemaTokensPerCall": 5904,
+        "schemaTokensFirstCall": 5904,
+        "wallMs": 21,
+        "firstVisibleTextMs": 20
       },
       "error": null
     },
     {
       "id": "remember-preference",
       "tier": "fast",
-      "tiers": ["fast"],
+      "tiers": [
+        "fast"
+      ],
       "status": "pass",
       "checks": [
         {
@@ -687,22 +726,24 @@
       "prose": null,
       "metrics": {
         "inputTokens": 47,
-        "cacheReadTokens": 8252,
-        "cacheWriteTokens": 8293,
+        "cacheReadTokens": 6056,
+        "cacheWriteTokens": 6097,
         "outputTokens": 35,
         "modelCalls": 2,
         "toolCalls": 1,
-        "schemaTokensPerCall": 8100,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 100,
-        "firstVisibleTextMs": 93
+        "schemaTokensPerCall": 5904,
+        "schemaTokensFirstCall": 5904,
+        "wallMs": 20,
+        "firstVisibleTextMs": 19
       },
       "error": null
     },
     {
       "id": "schedule-routine",
       "tier": "main",
-      "tiers": ["main"],
+      "tiers": [
+        "main"
+      ],
       "status": "pass",
       "checks": [
         {
@@ -720,23 +761,25 @@
       ],
       "prose": null,
       "metrics": {
-        "inputTokens": 57,
-        "cacheReadTokens": 8254,
-        "cacheWriteTokens": 8323,
-        "outputTokens": 61,
-        "modelCalls": 2,
-        "toolCalls": 1,
-        "schemaTokensPerCall": 8100,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 93,
-        "firstVisibleTextMs": 90
+        "inputTokens": 1707,
+        "cacheReadTokens": 13825,
+        "cacheWriteTokens": 6199,
+        "outputTokens": 90,
+        "modelCalls": 3,
+        "toolCalls": 2,
+        "schemaTokensPerCall": 5904,
+        "schemaTokensFirstCall": 5904,
+        "wallMs": 42,
+        "firstVisibleTextMs": 40
       },
       "error": null
     },
     {
       "id": "tool-error-recovery",
       "tier": "main",
-      "tiers": ["main"],
+      "tiers": [
+        "main"
+      ],
       "status": "pass",
       "checks": [
         {
@@ -759,22 +802,24 @@
       "prose": null,
       "metrics": {
         "inputTokens": 162,
-        "cacheReadTokens": 25081,
-        "cacheWriteTokens": 8407,
+        "cacheReadTokens": 18493,
+        "cacheWriteTokens": 6211,
         "outputTokens": 77,
         "modelCalls": 4,
         "toolCalls": 3,
-        "schemaTokensPerCall": 8100,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 337,
-        "firstVisibleTextMs": 334
+        "schemaTokensPerCall": 5904,
+        "schemaTokensFirstCall": 5904,
+        "wallMs": 42,
+        "firstVisibleTextMs": 40
       },
       "error": null
     },
     {
       "id": "database-question",
       "tier": "main",
-      "tiers": ["main"],
+      "tiers": [
+        "main"
+      ],
       "status": "pass",
       "checks": [
         {
@@ -792,16 +837,16 @@
       ],
       "prose": null,
       "metrics": {
-        "inputTokens": 100,
-        "cacheReadTokens": 17284,
-        "cacheWriteTokens": 8694,
-        "outputTokens": 51,
-        "modelCalls": 3,
-        "toolCalls": 2,
-        "schemaTokensPerCall": 8446,
-        "schemaTokensFirstCall": 8446,
-        "wallMs": 169,
-        "firstVisibleTextMs": 162
+        "inputTokens": 345,
+        "cacheReadTokens": 18913,
+        "cacheWriteTokens": 6250,
+        "outputTokens": 88,
+        "modelCalls": 4,
+        "toolCalls": 3,
+        "schemaTokensPerCall": 5919,
+        "schemaTokensFirstCall": 5919,
+        "wallMs": 45,
+        "firstVisibleTextMs": 43
       },
       "error": null
     }
@@ -811,15 +856,15 @@
     "pass": 22,
     "fail": 0,
     "unqualified": 0,
-    "inputTokens": 6143,
-    "cacheReadTokens": 292627,
-    "cacheWriteTokens": 191263,
-    "outputTokens": 1819,
-    "modelCalls": 58,
-    "toolCalls": 46,
-    "wallMs": 5249,
-    "schemaTokensPerCall": 7983,
-    "schemaTokensFirstCall": 8042,
+    "inputTokens": 7103,
+    "cacheReadTokens": 216658,
+    "cacheWriteTokens": 142189,
+    "outputTokens": 1885,
+    "modelCalls": 57,
+    "toolCalls": 48,
+    "wallMs": 1671,
+    "schemaTokensPerCall": 5896,
+    "schemaTokensFirstCall": 5904,
     "firstVisibleTextMs": null
   }
 }

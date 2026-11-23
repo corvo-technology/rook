@@ -2,9 +2,16 @@ import type { WikiCaptureState } from "@corvo/contracts";
 import { useEffect, useState } from "react";
 import { useI18n } from "../lib/i18n";
 import { getWikiCapture, setWikiCapture } from "../lib/wiki";
-import { SettingsGroup, SettingsSwitch } from "./settings-group";
+import { MenuPicker } from "./menu-picker";
+import { SettingsGroup } from "./settings-group";
 
-/** Whether the wiki curator reads one conversation; nothing while it cannot. */
+type Choice = "default" | "on" | "off";
+const toValue = (choice: string): boolean | null =>
+  choice === "on" ? true : choice === "off" ? false : null;
+const toChoice = (capture: boolean | null): Choice =>
+  capture === null ? "default" : capture ? "on" : "off";
+
+/** Whether the wiki curator reads one conversation; nothing while it cannot or may not change. */
 export function WikiCaptureRow({ target }: { target: { botId?: string; groupId?: string } }) {
   const { t } = useI18n();
   const [state, setState] = useState<WikiCaptureState | null>(null);
@@ -18,20 +25,25 @@ export function WikiCaptureRow({ target }: { target: { botId?: string; groupId?:
       current = false;
     };
   }, [botId, groupId]);
-  if (!state?.available) return null;
+  if (!state?.available || !state.canChange) return null;
 
-  function change(next: boolean) {
+  function change(choice: string) {
     const before = state;
-    setState((now) => (now ? { ...now, capture: next, on: next } : now));
-    setWikiCapture({ botId, groupId }, next).catch(() => setState(before));
+    const capture = toValue(choice);
+    setState((now) => (now ? { ...now, capture } : now));
+    setWikiCapture({ botId, groupId }, capture).catch(() => setState(before));
   }
 
   return (
     <SettingsGroup>
-      <SettingsSwitch
+      <MenuPicker
         label={t("Learn from this conversation")}
-        value={state.on}
-        disabled={!state.canChange}
+        choices={[
+          { key: "default", label: t("Default") },
+          { key: "on", label: t("Always") },
+          { key: "off", label: t("Never") },
+        ]}
+        value={toChoice(state.capture)}
         onChange={change}
       />
     </SettingsGroup>

@@ -1153,6 +1153,7 @@ export const ZH_MESSAGES: Record<string, string> = {
   Undone: "已撤销",
   "Approve all": "全部批准",
   "Learn from this conversation": "从此对话中学习",
+  Never: "从不",
   "A page changed since": "此后有页面已更改",
   Refuse: "拒绝",
   "Keep in the wiki": "保留到 Wiki",

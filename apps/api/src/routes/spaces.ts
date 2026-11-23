@@ -491,6 +491,7 @@ async function memberSpaceNavigation(
           preview: bot.preview,
           status: bot.status,
           runErrorId: bot.runErrorId,
+          wikiCapture: bot.wikiCapture,
           updatedAt: bot.updatedAt,
         })),
         groups: spaceGroups.map((group) => ({
@@ -502,6 +503,7 @@ async function memberSpaceNavigation(
           sectionId: group.sectionId,
           members: group.members,
           preview: group.preview,
+          wikiCapture: group.wikiCapture,
           unread: group.unread,
           updatedAt: group.updatedAt,
         })),

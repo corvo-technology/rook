@@ -98,6 +98,8 @@ it("reads and sets a conversation's switch for the target given, always with a b
   rpc.mockResolvedValue({ ok: true });
   await setWikiCapture({ groupId: "g1" }, false);
   expect(rpc).toHaveBeenLastCalledWith("wiki/capture/set", { groupId: "g1", capture: false });
+  await setWikiCapture({ groupId: "g1" }, null);
+  expect(rpc).toHaveBeenLastCalledWith("wiki/capture/set", { groupId: "g1", capture: null });
 });
 
 it("offers Approve all only with two or more waiting changes", () => {

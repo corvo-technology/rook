@@ -469,6 +469,7 @@ describe("createRepos.listSpaceBotsForSpaces", () => {
           id: "thread-2",
           userId: "user-1",
           unread: true,
+          wikiCapture: false,
           runs: [{ id: "run-failed", status: "failed" }],
         },
         runs: [{ status: "running" }],
@@ -517,6 +518,7 @@ describe("createRepos.listSpaceBotsForSpaces", () => {
         preview: "Waiting for a reply",
         status: "running",
         runErrorId: "run-failed",
+        wikiCapture: false,
         updatedAt: "2026-08-19T12:00:00.000Z",
       },
     ]);

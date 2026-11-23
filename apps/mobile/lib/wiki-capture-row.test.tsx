@@ -11,25 +11,35 @@ vi.mock("./i18n", () => ({ useI18n: () => ({ t: (text: string) => text }) }));
 vi.mock("./wiki", () => ({ getWikiCapture: get, setWikiCapture: set }));
 vi.mock("../components/settings-group", () => ({
   SettingsGroup: ({ children }: { children: ReactNode }) => createElement("div", null, children),
-  SettingsSwitch: ({
+}));
+vi.mock("../components/menu-picker", () => ({
+  MenuPicker: ({
     label,
+    choices,
     value,
-    disabled,
     onChange,
   }: {
     label: string;
-    value: boolean;
-    disabled?: boolean;
-    onChange: (value: boolean) => void;
+    choices: Array<{ key: string; label: string }>;
+    value: string;
+    onChange: (key: string) => void;
   }) =>
-    createElement("button", {
-      type: "button",
-      role: "switch",
-      "aria-label": label,
-      "aria-checked": value,
-      disabled,
-      onClick: () => onChange(!value),
-    }),
+    createElement(
+      "div",
+      { role: "group", "aria-label": label },
+      choices.map((choice) =>
+        createElement(
+          "button",
+          {
+            key: choice.key,
+            type: "button",
+            "aria-pressed": choice.key === value,
+            onClick: () => onChange(choice.key),
+          },
+          choice.label,
+        ),
+      ),
+    ),
 }));
 
 import { WikiCaptureRow } from "../components/wiki-capture-row";
@@ -57,36 +67,46 @@ async function mount() {
   });
   await act(async () => void (await Promise.resolve()));
 }
-const toggle = () => host.querySelector<HTMLElement>('[role="switch"]');
+const menu = () => host.querySelector<HTMLElement>('[role="group"]');
+const choice = (label: string) =>
+  [...host.querySelectorAll<HTMLElement>("button")].find((node) => node.textContent === label);
+const chosen = () =>
+  [...host.querySelectorAll<HTMLElement>("button")].find(
+    (node) => node.getAttribute("aria-pressed") === "true",
+  )?.textContent;
 
 it("shows nothing while the curator cannot read the conversation", async () => {
   get.mockResolvedValue(state({ available: false, on: false }));
   await mount();
-  expect(toggle()).toBeNull();
+  expect(menu()).toBeNull();
 });
 
-it("shows the effective value and sends an explicit boolean", async () => {
+it("shows the stored choice and sends on, off or null", async () => {
   get.mockResolvedValue(state());
   set.mockResolvedValue(undefined);
   await mount();
   expect(get).toHaveBeenCalledWith({ botId: "b1", groupId: undefined });
-  expect(toggle()?.getAttribute("aria-checked")).toBe("true");
-  await act(async () => toggle()?.click());
-  expect(set).toHaveBeenCalledWith({ botId: "b1", groupId: undefined }, false);
-  expect(toggle()?.getAttribute("aria-checked")).toBe("false");
+  expect(chosen()).toBe("Default");
+  await act(async () => choice("Never")?.click());
+  expect(set).toHaveBeenLastCalledWith({ botId: "b1", groupId: undefined }, false);
+  expect(chosen()).toBe("Never");
+  await act(async () => choice("Always")?.click());
+  expect(set).toHaveBeenLastCalledWith({ botId: "b1", groupId: undefined }, true);
+  await act(async () => choice("Default")?.click());
+  expect(set).toHaveBeenLastCalledWith({ botId: "b1", groupId: undefined }, null);
 });
 
-it("goes back to the previous value when saving fails", async () => {
-  get.mockResolvedValue(state());
+it("goes back to the previous choice when saving fails", async () => {
+  get.mockResolvedValue(state({ capture: true }));
   set.mockRejectedValue(new Error("offline"));
   await mount();
-  await act(async () => toggle()?.click());
+  await act(async () => choice("Never")?.click());
   await act(async () => void (await Promise.resolve()));
-  expect(toggle()?.getAttribute("aria-checked")).toBe("true");
+  expect(chosen()).toBe("Always");
 });
 
-it("is disabled for someone who does not own the conversation", async () => {
+it("is hidden from someone who does not own the conversation", async () => {
   get.mockResolvedValue(state({ canChange: false }));
   await mount();
-  expect(toggle()?.hasAttribute("disabled")).toBe(true);
+  expect(menu()).toBeNull();
 });

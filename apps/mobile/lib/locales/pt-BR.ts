@@ -1142,6 +1142,7 @@ export const PT_BR_MESSAGES: Record<string, string> = {
   Undone: "Desfeito",
   "Approve all": "Aprovar tudo",
   "Learn from this conversation": "Aprender com esta conversa",
+  Never: "Nunca",
   "A page changed since": "Uma página mudou desde então",
   Refuse: "Recusar",
   "Keep in the wiki": "Guardar na wiki",

@@ -26,3 +26,11 @@ describe("a group as the space lists it", () => {
     expect(SpaceGroupSchema.parse(group).purpose).toBeNull();
   });
 });
+
+describe("a group's wiki switch in the space listing", () => {
+  it("carries on, off or the default, and none from an older server", () => {
+    expect(SpaceGroupSchema.parse({ ...group, wikiCapture: true }).wikiCapture).toBe(true);
+    expect(SpaceGroupSchema.parse({ ...group, wikiCapture: null }).wikiCapture).toBeNull();
+    expect(SpaceGroupSchema.parse(group).wikiCapture).toBeUndefined();
+  });
+});

@@ -137,6 +137,8 @@ export const BotSchema = z.object({
   preview: z.string(),
   status: z.string(),
   runErrorId: Id.nullable().default(null),
+  /** Whether the wiki curator reads this chat: on, off, or null to follow its kind. */
+  wikiCapture: z.boolean().nullable().optional(),
   computerMode: ComputerModeSchema,
   updatedAt: z.string(),
   createdAt: z.string(),
@@ -231,6 +233,8 @@ export const GroupSchema = z.object({
   members: z.array(GroupMemberSchema),
   threadId: Id,
   preview: z.string(),
+  /** Whether the wiki curator reads this channel: on, off, or null to follow its kind. */
+  wikiCapture: z.boolean().nullable().optional(),
   unread: z.boolean(),
   updatedAt: z.string(),
   createdAt: z.string(),
@@ -312,6 +316,7 @@ export const SpaceBotSchema = BotSchema.pick({
   preview: true,
   status: true,
   runErrorId: true,
+  wikiCapture: true,
   updatedAt: true,
 })
   .extend({
@@ -330,6 +335,7 @@ export const SpaceGroupSchema = GroupSchema.pick({
   sectionId: true,
   members: true,
   preview: true,
+  wikiCapture: true,
   unread: true,
   updatedAt: true,
 }).extend(UnreadCountsSchema.shape);

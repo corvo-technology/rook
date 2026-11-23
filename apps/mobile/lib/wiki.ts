@@ -77,8 +77,11 @@ export function getWikiCapture(target: CaptureTarget): Promise<WikiCaptureState>
   return rpc("wiki/capture/get", target);
 }
 
-/** Turns the curator on or off for one conversation; always an explicit value. */
-export async function setWikiCapture(target: CaptureTarget, capture: boolean): Promise<void> {
+/** Turns the curator on or off for one conversation, or null to follow its default. */
+export async function setWikiCapture(
+  target: CaptureTarget,
+  capture: boolean | null,
+): Promise<void> {
   await rpc("wiki/capture/set", { ...target, capture });
 }
 

@@ -55,6 +55,11 @@ export function decideWikiChange(changeId: string, decision: "apply" | "refuse" 
   return rpc("wiki/changes/decide", { changeId, decision });
 }
 
+/** Asks for a change that hit a moved page to be written again; it runs in the background. */
+export function retryWikiChange(changeId: string) {
+  return rpc("wiki/changes/retry", { changeId });
+}
+
 /** Asks the wiki to keep one message of a chat with an agent or of a channel. */
 export function keepMessageInWiki(target: { botId?: string; groupId?: string }, messageId: string) {
   return rpc("wiki/keep", { ...target, messageId });
@@ -72,8 +77,8 @@ export function getWikiCapture(target: CaptureTarget): Promise<WikiCaptureState>
   return rpc("wiki/capture/get", target);
 }
 
-/** Turns the curator on or off for one conversation; always an explicit value. */
-export async function setWikiCapture(target: CaptureTarget, capture: boolean): Promise<void> {
+/** Turns the curator on or off for one conversation, or null to follow its default. */
+export async function setWikiCapture(target: CaptureTarget, capture: boolean | null): Promise<void> {
   await rpc("wiki/capture/set", { ...target, capture });
 }
 

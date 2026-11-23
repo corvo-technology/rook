@@ -31,6 +31,7 @@ const change = (state: string) => ({
   edits: [],
   createdAt: "2026-11-04T10:00:00.000Z",
   canSeeSource: false,
+  canRetry: state === "conflict",
 });
 
 let root: ReturnType<typeof createRoot> | undefined;

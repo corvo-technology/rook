@@ -66,6 +66,7 @@ export function wikiChangeView(record: WikiChangeRecord, viewerUserId: string): 
     id: record.id,
     state: record.state,
     review: record.review,
+    canRetry: record.canRetry,
     // The title and the reason are the model's summary of the conversation, so only the person
     // whose conversation it was is shown them. What would be written is page text, which every
     // member of the Space can read once it is in the wiki, so everyone sees it before approving.
@@ -155,7 +156,7 @@ export function wikiRoutes(ctx: RouterContext) {
           guarded(async () => {
             const record = await getWikiChange(db, scopeOf(context.actor), input.changeId);
             if (!record) throw new WikiNotFoundError();
-            if (record.state !== "conflict") throw new WikiChangeStateError();
+            if (!record.canRetry) throw new WikiChangeStateError();
             await deps.jobs.enqueue(wikiRetryJob(scopeOf(context.actor), record.id));
             return { ok: true as const };
           }),

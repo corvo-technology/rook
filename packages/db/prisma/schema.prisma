@@ -2208,6 +2208,8 @@ model WikiChange {
   decidedByUserId  String?
   /// Set while someone is writing this change's pages, so two answers cannot write them twice.
   claimedAt        DateTime?
+  /// How many times a conflict was written again, so a page that keeps moving cannot loop.
+  retries          Int        @default(0)
   createdAt        DateTime   @default(now())
   decidedAt        DateTime?
 

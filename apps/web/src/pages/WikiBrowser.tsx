@@ -58,6 +58,7 @@ export type WikiApi = {
     list(input: { state?: WikiChangeState[] }): Promise<WikiChange[]>;
     decide(input: { changeId: string; decision: "apply" | "refuse" | "undo" }): Promise<WikiChange>;
     applyAll(): Promise<WikiApplyAllResult>;
+    retry(input: { changeId: string }): Promise<{ ok: true }>;
   };
   review(): Promise<{ ok: true }>;
   settings: {
@@ -124,10 +125,22 @@ export function WikiBrowser({
     enabled: Boolean(title) && mode === "history",
   });
 
+  // Changes being written again: look again until they leave the conflict.
+  const [retrying, setRetrying] = useState<string[]>([]);
   const waiting = useQuery({
     queryKey: ["wiki", "changes", "pending"],
-    queryFn: () => api.changes.list({ state: ["pending"] }),
+    queryFn: () => api.changes.list({ state: ["pending", "conflict"] }),
+    refetchInterval: retrying.length ? 4_000 : false,
   });
+  useEffect(() => {
+    if (!waiting.data) return;
+    setRetrying((ids) => {
+      const still = ids.filter((id) =>
+        waiting.data.some((change) => change.id === id && change.state === "conflict"),
+      );
+      return still.length === ids.length ? ids : still;
+    });
+  }, [waiting.data]);
   const settings = useQuery({ queryKey: ["wiki", "settings"], queryFn: () => api.settings.get() });
   const imports = useQuery({
     queryKey: ["wiki", "imports"],
@@ -166,8 +179,12 @@ export function WikiBrowser({
   const [approvingAll, setApprovingAll] = useState(false);
   const [moved, setMoved] = useState(false);
   const [reviewing, setReviewing] = useState(false);
-  const needsCare = (waiting.data ?? []).filter((change) => change.review);
-  const asked = (waiting.data ?? []).filter((change) => !change.review);
+  const pending = (waiting.data ?? []).filter((change) => change.state === "pending");
+  const needsCare = pending.filter((change) => change.review);
+  const asked = pending.filter((change) => !change.review);
+  const conflicting = (waiting.data ?? []).filter(
+    (change) => change.state === "conflict" && change.canRetry,
+  );
 
   async function reviewNow() {
     if (reviewing) return;
@@ -196,6 +213,17 @@ export function WikiBrowser({
       setError(t`Could not save`);
     } finally {
       setDeciding(null);
+    }
+  }
+
+  async function retry(changeId: string) {
+    if (retrying.includes(changeId)) return;
+    setRetrying((ids) => [...ids, changeId]);
+    try {
+      await api.changes.retry({ changeId });
+    } catch {
+      setRetrying((ids) => ids.filter((id) => id !== changeId));
+      setError(t`Could not save`);
     }
   }
 
@@ -521,6 +549,20 @@ export function WikiBrowser({
               />
             ))}
           </section>
+        ) : null}
+        {conflicting.length ? (
+          <div className="flex flex-col gap-2" data-testid="wiki-conflicts">
+            {conflicting.map((change) => (
+              <WikiChangeCard
+                key={change.id}
+                change={change}
+                busy={retrying.includes(change.id)}
+                onDecide={() => undefined}
+                onRetry={() => void retry(change.id)}
+                onOpenPage={show}
+              />
+            ))}
+          </div>
         ) : null}
         {moved ? (
           <p className="px-1 text-sm text-muted-foreground" data-testid="wiki-moved">

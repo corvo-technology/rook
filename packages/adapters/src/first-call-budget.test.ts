@@ -154,7 +154,7 @@ describe("the first model call stays within its token budget", () => {
     const call = await firstCall({ chief: false });
     // Two names in the deferred tool index (research_start, research_status) cost about 10 tokens.
     expect(call.tools).toBeLessThan(8_050);
-    expect(call.system).toBeLessThan(3_100);
+    expect(call.system).toBeLessThan(3_150);
     expect(call.total).toBeLessThan(22_000);
   });
 

@@ -119,7 +119,8 @@ postgres("what an agent knows about the person (PostgreSQL)", () => {
       bot: held.bot,
       thread: held.thread,
       run: { spaceId: ids.spaceId, userId: ids.userId },
-      state: { tainted },
+      state: { tainted, earlierAttempt: Promise.resolve(false) },
+      trust: { receivedOutsideMessage: async () => false },
     } as unknown as RunContext;
     const call = { args: { fact }, finish: (value: unknown) => value } as unknown as ToolCall;
     return tenant(() => memoryTools.remember_about_user!(ctx, call));

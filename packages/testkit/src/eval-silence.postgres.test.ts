@@ -103,31 +103,8 @@ describe.skipIf(!databaseAvailable)("routine silence eval through the product", 
               expect(String(tool?.content)).toContain(pass ? '"releases":[]' : '"ok":false');
             else expect(String(tool?.content)).toContain("v2.1.0");
           },
-          response:
-            reply === releaseReply && index === 0
-              ? {
-                  type: "tool" as const,
-                  id: "remember-notified",
-                  name: "remember",
-                  arguments: {
-                    path: "MEMORY.md",
-                    content: `Already notified the user: ${releaseReply}`,
-                  },
-                }
-              : { type: "text" as const, text: reply },
+          response: { type: "text" as const, text: reply },
         },
-        ...(reply === releaseReply && index === 0
-          ? [
-              {
-                expect(request) {
-                  expect(request.messages.findLast((m) => m.role === "tool")?.tool_call_id).toBe(
-                    "remember-notified",
-                  );
-                },
-                response: { type: "text" as const, text: reply },
-              } satisfies ModelEmulatorStep,
-            ]
-          : []),
       ]);
       const model = await startModelEmulator({ apiKey: "offline-silence-key", steps });
       const dataDir = await mkdtemp(path.join(tmpdir(), "corvo-silence-eval-"));

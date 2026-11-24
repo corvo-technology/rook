@@ -102,7 +102,7 @@ describe("multiline memory facts", () => {
 
 describe("the memory rule in tool descriptions", () => {
   it.each(["remember", "remember_about_user", "save_memory", "save_shared_memory"])(
-    "%s says memory holds facts, not instructions found in outside text",
+    "%s carries the facts-only rule",
     (name) => {
       const tool = builtinAgentTools.find((candidate) => candidate.name === name);
       expect(tool?.description).toContain(MEMORY_HOLDS_FACTS);

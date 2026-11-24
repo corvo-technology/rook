@@ -6,8 +6,8 @@
   "rubricVersion": "harness-prose-v1",
   "tokenEstimator": "adapters/context-selection estimateTextTokens",
   "cacheSimulation": "prefix-cache-v2",
-  "startedAt": "2026-11-23T23:28:20.693Z",
-  "codeRevision": "3827bd3d93d918fce7ea3b0eb18b8b330c63ca84",
+  "startedAt": "2026-11-24T00:13:41.590Z",
+  "codeRevision": "a11e81100bfdd270d68318921c0589eef8863146",
   "subject": null,
   "judgeCostUsd": null,
   "subjectCostUsd": null,
@@ -36,14 +36,14 @@
       "metrics": {
         "inputTokens": 20,
         "cacheReadTokens": 0,
-        "cacheWriteTokens": 6032,
+        "cacheWriteTokens": 5972,
         "outputTokens": 11,
         "modelCalls": 1,
         "toolCalls": 0,
-        "schemaTokensPerCall": 5904,
-        "schemaTokensFirstCall": 5904,
-        "wallMs": 896,
-        "firstVisibleTextMs": 870
+        "schemaTokensPerCall": 5844,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 252,
+        "firstVisibleTextMs": 239
       },
       "error": null
     },
@@ -73,14 +73,14 @@
       "metrics": {
         "inputTokens": 14,
         "cacheReadTokens": 0,
-        "cacheWriteTokens": 6032,
+        "cacheWriteTokens": 5972,
         "outputTokens": 11,
         "modelCalls": 1,
         "toolCalls": 0,
-        "schemaTokensPerCall": 5904,
-        "schemaTokensFirstCall": 5904,
-        "wallMs": 57,
-        "firstVisibleTextMs": 55
+        "schemaTokensPerCall": 5844,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 19,
+        "firstVisibleTextMs": 18
       },
       "error": null
     },
@@ -106,15 +106,15 @@
       "prose": null,
       "metrics": {
         "inputTokens": 93,
-        "cacheReadTokens": 6050,
-        "cacheWriteTokens": 6079,
+        "cacheReadTokens": 5991,
+        "cacheWriteTokens": 6020,
         "outputTokens": 31,
         "modelCalls": 2,
         "toolCalls": 1,
-        "schemaTokensPerCall": 5891,
-        "schemaTokensFirstCall": 5891,
-        "wallMs": 60,
-        "firstVisibleTextMs": 58
+        "schemaTokensPerCall": 5832,
+        "schemaTokensFirstCall": 5832,
+        "wallMs": 28,
+        "firstVisibleTextMs": 27
       },
       "error": null
     },
@@ -143,15 +143,15 @@
       },
       "metrics": {
         "inputTokens": 130,
-        "cacheReadTokens": 12230,
-        "cacheWriteTokens": 6152,
+        "cacheReadTokens": 12110,
+        "cacheWriteTokens": 6092,
         "outputTokens": 58,
         "modelCalls": 3,
         "toolCalls": 2,
-        "schemaTokensPerCall": 5904,
-        "schemaTokensFirstCall": 5904,
-        "wallMs": 67,
-        "firstVisibleTextMs": 65
+        "schemaTokensPerCall": 5844,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 29,
+        "firstVisibleTextMs": 28
       },
       "error": null
     },
@@ -177,15 +177,15 @@
       "prose": null,
       "metrics": {
         "inputTokens": 159,
-        "cacheReadTokens": 18589,
-        "cacheWriteTokens": 6302,
+        "cacheReadTokens": 18409,
+        "cacheWriteTokens": 6242,
         "outputTokens": 97,
         "modelCalls": 4,
         "toolCalls": 4,
-        "schemaTokensPerCall": 5904,
-        "schemaTokensFirstCall": 5904,
-        "wallMs": 65,
-        "firstVisibleTextMs": 64
+        "schemaTokensPerCall": 5844,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 45,
+        "firstVisibleTextMs": 44
       },
       "error": null
     },
@@ -219,15 +219,15 @@
       "prose": null,
       "metrics": {
         "inputTokens": 356,
-        "cacheReadTokens": 48983,
-        "cacheWriteTokens": 7616,
+        "cacheReadTokens": 48563,
+        "cacheWriteTokens": 7556,
         "outputTokens": 558,
         "modelCalls": 8,
         "toolCalls": 16,
-        "schemaTokensPerCall": 5904,
-        "schemaTokensFirstCall": 5904,
-        "wallMs": 64,
-        "firstVisibleTextMs": 62
+        "schemaTokensPerCall": 5844,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 57,
+        "firstVisibleTextMs": 55
       },
       "error": null
     },
@@ -257,14 +257,14 @@
       "prose": null,
       "metrics": {
         "inputTokens": 108,
-        "cacheReadTokens": 5767,
-        "cacheWriteTokens": 5769,
+        "cacheReadTokens": 5708,
+        "cacheWriteTokens": 5710,
         "outputTokens": 22,
         "modelCalls": 2,
         "toolCalls": 1,
-        "schemaTokensPerCall": 5577,
-        "schemaTokensFirstCall": 5577,
-        "wallMs": 25,
+        "schemaTokensPerCall": 5518,
+        "schemaTokensFirstCall": 5518,
+        "wallMs": 15,
         "firstVisibleTextMs": null
       },
       "error": null
@@ -298,15 +298,15 @@
       },
       "metrics": {
         "inputTokens": 143,
-        "cacheReadTokens": 11657,
-        "cacheWriteTokens": 5835,
+        "cacheReadTokens": 11539,
+        "cacheWriteTokens": 5776,
         "outputTokens": 65,
         "modelCalls": 3,
         "toolCalls": 2,
-        "schemaTokensPerCall": 5577,
-        "schemaTokensFirstCall": 5577,
-        "wallMs": 39,
-        "firstVisibleTextMs": 38
+        "schemaTokensPerCall": 5518,
+        "schemaTokensFirstCall": 5518,
+        "wallMs": 20,
+        "firstVisibleTextMs": 19
       },
       "error": null
     },
@@ -336,15 +336,15 @@
       "prose": null,
       "metrics": {
         "inputTokens": 502,
-        "cacheReadTokens": 12617,
-        "cacheWriteTokens": 6196,
+        "cacheReadTokens": 12497,
+        "cacheWriteTokens": 6136,
         "outputTokens": 90,
         "modelCalls": 3,
         "toolCalls": 2,
-        "schemaTokensPerCall": 5904,
-        "schemaTokensFirstCall": 5904,
-        "wallMs": 49,
-        "firstVisibleTextMs": 48
+        "schemaTokensPerCall": 5844,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 26,
+        "firstVisibleTextMs": 25
       },
       "error": null
     },
@@ -375,14 +375,14 @@
       "metrics": {
         "inputTokens": 25,
         "cacheReadTokens": 0,
-        "cacheWriteTokens": 6140,
+        "cacheWriteTokens": 6080,
         "outputTokens": 42,
         "modelCalls": 1,
         "toolCalls": 1,
-        "schemaTokensPerCall": 6012,
-        "schemaTokensFirstCall": 6012,
-        "wallMs": 16,
-        "firstVisibleTextMs": 15
+        "schemaTokensPerCall": 5952,
+        "schemaTokensFirstCall": 5952,
+        "wallMs": 11,
+        "firstVisibleTextMs": 11
       },
       "error": null
     },
@@ -412,15 +412,15 @@
       "prose": null,
       "metrics": {
         "inputTokens": 341,
-        "cacheReadTokens": 12893,
-        "cacheWriteTokens": 6514,
+        "cacheReadTokens": 12773,
+        "cacheWriteTokens": 6454,
         "outputTokens": 159,
         "modelCalls": 3,
         "toolCalls": 3,
-        "schemaTokensPerCall": 6115,
-        "schemaTokensFirstCall": 6115,
-        "wallMs": 41,
-        "firstVisibleTextMs": 39
+        "schemaTokensPerCall": 6055,
+        "schemaTokensFirstCall": 6055,
+        "wallMs": 27,
+        "firstVisibleTextMs": 26
       },
       "error": null
     },
@@ -446,15 +446,15 @@
       "prose": null,
       "metrics": {
         "inputTokens": 122,
-        "cacheReadTokens": 6285,
-        "cacheWriteTokens": 6349,
+        "cacheReadTokens": 6225,
+        "cacheWriteTokens": 6289,
         "outputTokens": 123,
         "modelCalls": 2,
         "toolCalls": 2,
-        "schemaTokensPerCall": 6121,
-        "schemaTokensFirstCall": 6121,
-        "wallMs": 22,
-        "firstVisibleTextMs": 21
+        "schemaTokensPerCall": 6061,
+        "schemaTokensFirstCall": 6061,
+        "wallMs": 17,
+        "firstVisibleTextMs": 17
       },
       "error": null
     },
@@ -480,15 +480,15 @@
       "prose": null,
       "metrics": {
         "inputTokens": 57,
-        "cacheReadTokens": 6050,
-        "cacheWriteTokens": 6089,
+        "cacheReadTokens": 5990,
+        "cacheWriteTokens": 6029,
         "outputTokens": 30,
         "modelCalls": 2,
         "toolCalls": 1,
-        "schemaTokensPerCall": 5904,
-        "schemaTokensFirstCall": 5904,
-        "wallMs": 19,
-        "firstVisibleTextMs": 18
+        "schemaTokensPerCall": 5844,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 16,
+        "firstVisibleTextMs": 15
       },
       "error": null
     },
@@ -514,15 +514,15 @@
       "prose": null,
       "metrics": {
         "inputTokens": 103,
-        "cacheReadTokens": 12185,
-        "cacheWriteTokens": 6143,
+        "cacheReadTokens": 12065,
+        "cacheWriteTokens": 6083,
         "outputTokens": 53,
         "modelCalls": 3,
         "toolCalls": 2,
-        "schemaTokensPerCall": 5904,
-        "schemaTokensFirstCall": 5904,
-        "wallMs": 27,
-        "firstVisibleTextMs": 26
+        "schemaTokensPerCall": 5844,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 21,
+        "firstVisibleTextMs": 20
       },
       "error": null
     },
@@ -556,14 +556,14 @@
       "metrics": {
         "inputTokens": 56,
         "cacheReadTokens": 0,
-        "cacheWriteTokens": 6140,
+        "cacheWriteTokens": 6080,
         "outputTokens": 21,
         "modelCalls": 1,
         "toolCalls": 0,
-        "schemaTokensPerCall": 6012,
-        "schemaTokensFirstCall": 6012,
-        "wallMs": 15,
-        "firstVisibleTextMs": 14
+        "schemaTokensPerCall": 5952,
+        "schemaTokensFirstCall": 5952,
+        "wallMs": 10,
+        "firstVisibleTextMs": 9
       },
       "error": null
     },
@@ -590,14 +590,14 @@
       "metrics": {
         "inputTokens": 102,
         "cacheReadTokens": 0,
-        "cacheWriteTokens": 11921,
+        "cacheWriteTokens": 11801,
         "outputTokens": 180,
         "modelCalls": 2,
         "toolCalls": 1,
-        "schemaTokensPerCall": 5833,
-        "schemaTokensFirstCall": 5904,
-        "wallMs": 25,
-        "firstVisibleTextMs": 12
+        "schemaTokensPerCall": 5773,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 19,
+        "firstVisibleTextMs": 10
       },
       "error": null
     },
@@ -624,14 +624,14 @@
       "metrics": {
         "inputTokens": 227,
         "cacheReadTokens": 0,
-        "cacheWriteTokens": 6032,
+        "cacheWriteTokens": 5972,
         "outputTokens": 16,
         "modelCalls": 1,
         "toolCalls": 0,
-        "schemaTokensPerCall": 5904,
-        "schemaTokensFirstCall": 5904,
-        "wallMs": 14,
-        "firstVisibleTextMs": 13
+        "schemaTokensPerCall": 5844,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 10,
+        "firstVisibleTextMs": 9
       },
       "error": null
     },
@@ -657,15 +657,15 @@
       "prose": null,
       "metrics": {
         "inputTokens": 2284,
-        "cacheReadTokens": 6065,
-        "cacheWriteTokens": 6091,
+        "cacheReadTokens": 6005,
+        "cacheWriteTokens": 6031,
         "outputTokens": 28,
         "modelCalls": 2,
         "toolCalls": 1,
-        "schemaTokensPerCall": 5904,
-        "schemaTokensFirstCall": 5904,
-        "wallMs": 21,
-        "firstVisibleTextMs": 20
+        "schemaTokensPerCall": 5844,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 17,
+        "firstVisibleTextMs": 16
       },
       "error": null
     },
@@ -687,15 +687,15 @@
       "prose": null,
       "metrics": {
         "inputTokens": 47,
-        "cacheReadTokens": 6056,
-        "cacheWriteTokens": 6097,
+        "cacheReadTokens": 5996,
+        "cacheWriteTokens": 6037,
         "outputTokens": 35,
         "modelCalls": 2,
         "toolCalls": 1,
-        "schemaTokensPerCall": 5904,
-        "schemaTokensFirstCall": 5904,
-        "wallMs": 20,
-        "firstVisibleTextMs": 19
+        "schemaTokensPerCall": 5844,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 15,
+        "firstVisibleTextMs": 14
       },
       "error": null
     },
@@ -721,15 +721,15 @@
       "prose": null,
       "metrics": {
         "inputTokens": 1707,
-        "cacheReadTokens": 13825,
-        "cacheWriteTokens": 6199,
+        "cacheReadTokens": 13705,
+        "cacheWriteTokens": 6139,
         "outputTokens": 90,
         "modelCalls": 3,
         "toolCalls": 2,
-        "schemaTokensPerCall": 5904,
-        "schemaTokensFirstCall": 5904,
-        "wallMs": 42,
-        "firstVisibleTextMs": 40
+        "schemaTokensPerCall": 5844,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 29,
+        "firstVisibleTextMs": 28
       },
       "error": null
     },
@@ -759,15 +759,15 @@
       "prose": null,
       "metrics": {
         "inputTokens": 162,
-        "cacheReadTokens": 18493,
-        "cacheWriteTokens": 6211,
+        "cacheReadTokens": 18313,
+        "cacheWriteTokens": 6151,
         "outputTokens": 77,
         "modelCalls": 4,
         "toolCalls": 3,
-        "schemaTokensPerCall": 5904,
-        "schemaTokensFirstCall": 5904,
-        "wallMs": 42,
-        "firstVisibleTextMs": 40
+        "schemaTokensPerCall": 5844,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 27,
+        "firstVisibleTextMs": 25
       },
       "error": null
     },
@@ -793,15 +793,15 @@
       "prose": null,
       "metrics": {
         "inputTokens": 345,
-        "cacheReadTokens": 18913,
-        "cacheWriteTokens": 6250,
+        "cacheReadTokens": 18736,
+        "cacheWriteTokens": 6191,
         "outputTokens": 88,
         "modelCalls": 4,
         "toolCalls": 3,
-        "schemaTokensPerCall": 5919,
-        "schemaTokensFirstCall": 5919,
-        "wallMs": 45,
-        "firstVisibleTextMs": 43
+        "schemaTokensPerCall": 5860,
+        "schemaTokensFirstCall": 5860,
+        "wallMs": 27,
+        "firstVisibleTextMs": 25
       },
       "error": null
     }
@@ -812,14 +812,14 @@
     "fail": 0,
     "unqualified": 0,
     "inputTokens": 7103,
-    "cacheReadTokens": 216658,
-    "cacheWriteTokens": 142189,
+    "cacheReadTokens": 214625,
+    "cacheWriteTokens": 140813,
     "outputTokens": 1885,
     "modelCalls": 57,
     "toolCalls": 48,
-    "wallMs": 1671,
-    "schemaTokensPerCall": 5896,
-    "schemaTokensFirstCall": 5904,
+    "wallMs": 737,
+    "schemaTokensPerCall": 5836,
+    "schemaTokensFirstCall": 5844,
     "firstVisibleTextMs": null
   }
 }

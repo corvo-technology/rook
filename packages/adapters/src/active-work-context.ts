@@ -82,6 +82,19 @@ async function delegatedRuns(prisma: PrismaClient, input: ActiveWorkInput) {
   return mine;
 }
 
+async function ownWaitingRuns(prisma: PrismaClient, input: ActiveWorkInput) {
+  return prisma.run.findMany({
+    where: {
+      spaceId: input.spaceId,
+      botId: input.botId,
+      id: { not: input.runId },
+      status: "waiting_input",
+    },
+    select: { id: true, bot: { select: { name: true } } },
+    take: RUNS_SCANNED,
+  });
+}
+
 async function ticketLines(prisma: PrismaClient, input: ActiveWorkInput, now: Date) {
   const board = await prisma.board.findUnique({ where: { spaceId: input.spaceId } });
   if (!board) return [];
@@ -124,16 +137,7 @@ export async function loadActiveWorkContext(
     deps.ticketBoardEnabled
       ? ticketLines(prisma, input, input.now ?? new Date())
       : Promise.resolve([]),
-    prisma.run.findMany({
-      where: {
-        spaceId: input.spaceId,
-        botId: input.botId,
-        id: { not: input.runId },
-        status: "waiting_input",
-      },
-      select: { id: true, bot: { select: { name: true } } },
-      take: RUNS_SCANNED,
-    }),
+    ownWaitingRuns(prisma, input),
   ]);
   const asks = await waitingAskLines(prisma, [
     ...ownWaiting.map((run) => ({ id: run.id, botName: run.bot.name })),

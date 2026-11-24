@@ -27,6 +27,7 @@ describe("listSpaceGroupsForSpaces", () => {
           id: "thread-1",
           userId: "user-1",
           unread: true,
+          wikiCapture: true,
         },
         members: [
           { bot: { id: "bot-1", name: "Triage", color: "#111", runs: [] } },
@@ -84,6 +85,7 @@ describe("listSpaceGroupsForSpaces", () => {
           { botId: "bot-2", name: "Responder", color: "#222", status: "running" },
         ],
         preview: "Escalation pending",
+        wikiCapture: true,
         unread: true,
         updatedAt: "2026-08-20T00:00:00.000Z",
       },

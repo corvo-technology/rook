@@ -1188,6 +1188,7 @@ export const JA_MESSAGES: Record<string, string> = {
   Undone: "元に戻しました",
   "Approve all": "すべて承認",
   "Learn from this conversation": "この会話から学ぶ",
+  Never: "しない",
   "A page changed since": "その後ページが変更されました",
   Refuse: "却下",
   "Keep in the wiki": "Wikiに保存",

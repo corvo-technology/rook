@@ -111,6 +111,14 @@ export function ChatContextMenu({
         if (section && spaceId) dialogs.setRenameSectionTarget({ section, spaceId });
         onClose();
       }}
+      onWikiCapture={(capture) => {
+        onClose();
+        const target = bot ? { botId: bot.id } : { groupId: group!.id };
+        void rpc.wiki.capture
+          .set({ ...target, capture })
+          .then(() => refreshBots())
+          .catch(() => undefined);
+      }}
       onEdit={() => {
         openChatSettings(bot ? "bot" : "group", chat.id);
         onClose();

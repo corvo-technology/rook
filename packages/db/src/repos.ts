@@ -113,7 +113,7 @@ function mapBot(
     memoryScope: string | null;
     createdAt: Date;
     updatedAt: Date;
-    thread: { id: string; unread: boolean } | null;
+    thread: { id: string; unread: boolean; wikiCapture?: boolean | null } | null;
     computer: { scope: string } | null;
     voiceId?: string | null;
     autoSpeak?: boolean;
@@ -168,6 +168,7 @@ function mapBot(
     preview,
     status,
     runErrorId,
+    wikiCapture: bot.thread.wikiCapture ?? null,
     computerMode: bot.computer ? parseComputerMode(bot.computer.scope) : "team",
     createdAt: bot.createdAt.toISOString(),
     updatedAt: updatedAt.toISOString(),
@@ -272,6 +273,7 @@ export function createRepos(
             id: true,
             userId: true,
             unread: true,
+            wikiCapture: true,
           },
         },
         runs: activeRunSelection,
@@ -308,6 +310,7 @@ export function createRepos(
         preview: previewFromBlocks(bot.thread.messages[0]?.blocks),
         status: activeRun?.status ?? "idle",
         runErrorId: rosterRunErrorId(bot.thread.runs[0], activeRun),
+        wikiCapture: bot.thread.wikiCapture ?? null,
         updatedAt: rosterUpdatedAt(bot.thread.messages[0], bot.updatedAt).toISOString(),
       };
     });

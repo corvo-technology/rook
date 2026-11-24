@@ -13,6 +13,7 @@ import {
   Bell,
   BellDot,
   BellOff,
+  BookOpen,
   Check,
   Copy,
   Eraser,
@@ -23,7 +24,7 @@ import {
   Trash2,
 } from "lucide-react";
 
-type ChatMenuTarget = Pick<Bot, "name" | "pinned" | "sectionId" | "unread">;
+type ChatMenuTarget = Pick<Bot, "name" | "pinned" | "sectionId" | "unread" | "wikiCapture">;
 
 /** A roster row's context menu content; `onClose` serves the lazy-load error fallback. */
 export function BotContextMenu({
@@ -36,6 +37,7 @@ export function BotContextMenu({
   onToggleUnread,
   muted,
   onMute,
+  onWikiCapture,
   onEdit,
   onDuplicate,
   onClear,
@@ -54,6 +56,8 @@ export function BotContextMenu({
   muted: boolean | undefined;
   /** Silences the pushes for a while, or turns them back on with null. */
   onMute: (duration: MuteDuration | null) => void;
+  /** Sets whether the wiki curator reads this chat; null follows its kind. */
+  onWikiCapture: (capture: boolean | null) => void;
   onEdit: () => void;
   onDuplicate: () => void;
   onClear: () => void;
@@ -126,6 +130,26 @@ export function BotContextMenu({
           </ContextMenuSubContent>
         </ContextMenuSub>
       )}
+      <ContextMenuSub>
+        <ContextMenuSubTrigger>
+          <BookOpen />
+          {t`Learn from this conversation`}
+        </ContextMenuSubTrigger>
+        <ContextMenuSubContent className="min-w-[180px]">
+          {(
+            [
+              [null, t`Default`],
+              [true, t`Always`],
+              [false, t`Never`],
+            ] as const
+          ).map(([value, label]) => (
+            <ContextMenuItem key={label} onClick={() => onWikiCapture(value)}>
+              {label}
+              {(bot.wikiCapture ?? null) === value ? <Check className="ms-auto" /> : null}
+            </ContextMenuItem>
+          ))}
+        </ContextMenuSubContent>
+      </ContextMenuSub>
       <ContextMenuSeparator />
       <ContextMenuItem onClick={onEdit}>
         <Pencil />

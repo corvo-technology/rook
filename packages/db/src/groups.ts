@@ -32,6 +32,7 @@ type GroupRecord = {
   thread: {
     id: string;
     unread: boolean;
+    wikiCapture?: boolean | null;
     messages: Array<{ blocks: unknown }>;
   } | null;
   members: Array<{
@@ -50,6 +51,7 @@ type SpaceGroupRecord = Pick<
 > & {
   thread: {
     unread: boolean;
+    wikiCapture?: boolean | null;
     messages: Array<{ blocks: unknown }>;
   } | null;
 };
@@ -99,6 +101,7 @@ function mapGroup(group: GroupRecord): Group {
     members: mapGroupMembers(group.members),
     threadId: group.thread.id,
     preview,
+    wikiCapture: group.thread.wikiCapture ?? null,
     unread: group.thread.unread,
     updatedAt: group.updatedAt.toISOString(),
     createdAt: group.createdAt.toISOString(),
@@ -116,6 +119,7 @@ function mapSpaceGroup(group: SpaceGroupRecord): SpaceGroup {
     sectionId: group.sectionId,
     members: mapGroupMembers(group.members),
     preview: previewFromBlocks(group.thread.messages[0]?.blocks),
+    wikiCapture: group.thread.wikiCapture ?? null,
     unread: group.thread.unread,
     updatedAt: group.updatedAt.toISOString(),
   };
@@ -366,6 +370,7 @@ export function createGroupRepos(prisma: PrismaClient) {
               id: true,
               userId: true,
               unread: true,
+              wikiCapture: true,
             },
           },
           members: groupInclude.members,

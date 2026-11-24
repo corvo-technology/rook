@@ -336,11 +336,13 @@ export function addRunSecrets(ctx: RunContext, values: string[]) {
 
 export function pauseForApproval(ctx: RunContext) {
   ctx.state.approval.pausePending = true;
+  ctx.state.guards.humanWait = true;
   return approvalPausedToolResult();
 }
 
 export function pauseForSecret(ctx: RunContext) {
   ctx.state.approval.pausePending = true;
+  ctx.state.guards.humanWait = true;
   return secretPausedToolResult();
 }
 

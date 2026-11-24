@@ -244,6 +244,7 @@ async function streamProgress(ctx: RunContext, event: RuntimeEvent<"progress">) 
 async function pauseForAnswer(ctx: RunContext, event: RuntimeEvent<"ask">) {
   const { deps, run, runId, bot, thread, workerId, fence } = ctx;
   if (!(await renewRunLease(deps, runId, workerId, fence))) return;
+  ctx.state.guards.humanWait = true;
   const safeText = redactSecrets(event.text, ctx.secrets);
   const safeDetail = event.detail ? redactSecrets(event.detail, ctx.secrets) : event.detail;
   const safeActions = event.actions?.map((action) => ({
@@ -293,6 +294,7 @@ async function pauseForTakeover(ctx: RunContext, event: RuntimeEvent<"takeover">
   const { deps, run, runId, bot, thread, workerId, fence } = ctx;
   const { reply } = ctx.state;
   if (!(await renewRunLease(deps, runId, workerId, fence))) return;
+  ctx.state.guards.humanWait = true;
   // The user takes over the computer's screen, so it must be up before the run waits.
   await ctx.computer.get("takeover");
   const safeReason = redactSecrets(event.reason, ctx.secrets);

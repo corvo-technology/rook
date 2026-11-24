@@ -30,7 +30,7 @@ type DelegatedRun = {
 const OPEN_STATUSES = ["todo", "doing", "review", "blocked"];
 
 /** The agent that delegated this run's work and the goal it gave, or none for any other run. */
-async function delegation(prisma: PrismaClient, run: DelegatedRun) {
+export async function delegation(prisma: PrismaClient, run: DelegatedRun) {
   if (run.ticketId || !run.sourceMessageId) return undefined;
   if (run.trigger !== "bot_message" && run.trigger !== "follow_up") return undefined;
   const source = await prisma.message.findUnique({

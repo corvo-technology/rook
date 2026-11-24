@@ -76,6 +76,7 @@ import {
 } from "@corvo/db";
 import { enrichLogContext, getLogger } from "@corvo/logging";
 import { sanitizedError } from "@corvo/logging/monitoring";
+import { loadActiveWorkContext } from "./active-work-context.js";
 import { decryptAgentEnvironment, formatAgentEnvironmentInstruction } from "./agent-environment.js";
 import { createApprovedEffectReplayQueue } from "./approval-effect.js";
 import { PARTIAL_REPLY_NOTE } from "./automated-messages.js";
@@ -844,6 +845,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
           wikiContext,
           scratchpadContext,
           ticketContext,
+          activeWorkContext,
           recalled,
         ] = await Promise.all([
           discoveredPromise,
@@ -872,6 +874,14 @@ export function createRunExecutor(deps: ExecutorDeps) {
                   ? { ownerBotId: bot.id }
                   : {}),
               }),
+          // A hint only: a failed lookup must never fail the run.
+          withholdOwnerContext
+            ? Promise.resolve(undefined)
+            : loadActiveWorkContext(deps, {
+                spaceId: run.spaceId,
+                botId: bot.id,
+                runId,
+              }).catch(() => undefined),
           recallPromise,
         ]);
         // What the team wrote down travels with the durable memory, so both are redacted and kept
@@ -1828,6 +1838,9 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const redactedTicketContext = ticketContext
           ? redactSecrets(ticketContext, runSecrets)
           : undefined;
+        const redactedActiveWork = activeWorkContext
+          ? redactSecrets(activeWorkContext, runSecrets)
+          : undefined;
         const redactedRecalledMemory = recalledMemory
           ? redactSecrets(recalledMemory, runSecrets)
           : undefined;
@@ -1879,6 +1892,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
           routerAnswers,
           repeatHint,
           redactedTicketContext,
+          redactedActiveWork,
           redactedRecalledMemory,
           surfacedItems,
           hostContext,
@@ -1908,6 +1922,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
               routerAnswers,
               repeatHint,
               redactedTicketContext,
+              redactedActiveWork,
               redactedRecalledMemory,
               surfacedItems,
               hostContext,

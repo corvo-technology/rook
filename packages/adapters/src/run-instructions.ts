@@ -408,6 +408,8 @@ export function turnNote(parts: {
   routerAnswers?: string | undefined;
   repeatHint?: string | undefined;
   redactedTicketContext?: string | undefined;
+  /** Open delegated work, waiting asks and tickets in progress, read fresh for this turn. */
+  redactedActiveWork?: string | undefined;
   redactedRecalledMemory?: string | undefined;
   /** What this autonomous run already told the person. */
   surfacedItems?: string | undefined;
@@ -427,6 +429,7 @@ export function turnNote(parts: {
     parts.routerAnswers,
     parts.repeatHint,
     parts.redactedTicketContext,
+    parts.redactedActiveWork,
     parts.redactedRecalledMemory,
     parts.surfacedItems,
     parts.hostContext,

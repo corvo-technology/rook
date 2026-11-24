@@ -55,6 +55,11 @@ export function decideWikiChange(changeId: string, decision: "apply" | "refuse" 
   return rpc("wiki/changes/decide", { changeId, decision });
 }
 
+/** Asks for a change that hit a moved page to be written again; it runs in the background. */
+export function retryWikiChange(changeId: string) {
+  return rpc("wiki/changes/retry", { changeId });
+}
+
 /** Asks the wiki to keep one message of a chat with an agent or of a channel. */
 export function keepMessageInWiki(target: { botId?: string; groupId?: string }, messageId: string) {
   return rpc("wiki/keep", { ...target, messageId });

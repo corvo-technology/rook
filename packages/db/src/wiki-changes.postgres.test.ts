@@ -17,9 +17,12 @@ import {
   decideWikiChange,
   getWikiSettings,
   listWikiChanges,
+  reopenWikiChange,
   setThreadWikiCapture,
   setWikiSettings,
+  WIKI_RETRY_LIMIT,
   WikiChangeStateError,
+  wikiChangeToRetry,
 } from "./wiki-changes.js";
 import { wikiTestFixture } from "./wiki-test-fixture.js";
 
@@ -151,6 +154,56 @@ describePostgres("wiki changes (PostgreSQL)", () => {
       expect(result.state).toBe("conflict");
       expect(await body("Plan Five")).toBe("Status: planning. Budget approved.");
     }));
+
+  describe("writing a conflicting change again", () => {
+    const replace = (page: string) => [
+      { op: "replace" as const, page, old: "planning", new: "building" },
+    ];
+    const conflict = async (page: string) => {
+      await write(page, "Status: planning.");
+      const change = await propose(replace(page));
+      await write(page, "Status: planning. Budget approved.");
+      await decideWikiChange(fx.prisma, mine(), change!.id, "apply");
+      return change!.id;
+    };
+
+    it("puts it back to waiting against the page as it is now, and then it applies", () =>
+      system(async () => {
+        const id = await conflict("Retry One");
+        expect(await wikiChangeToRetry(fx.prisma, mine(), id)).toBeDefined();
+        const again = await reopenWikiChange(fx.prisma, mine(), id, replace("Retry One"));
+        expect(again?.state).toBe("pending");
+        expect((await decideWikiChange(fx.prisma, mine(), id, "apply")).state).toBe("applied");
+        expect(await body("Retry One")).toBe("Status: building. Budget approved.");
+      }));
+
+    it("stops after the limit, so a page that keeps moving cannot loop", () =>
+      system(async () => {
+        const id = await conflict("Retry Two");
+        for (let attempt = 0; attempt < WIKI_RETRY_LIMIT; attempt++) {
+          expect(
+            await reopenWikiChange(fx.prisma, mine(), id, replace("Retry Two")),
+          ).not.toBeNull();
+          await write("Retry Two", `Status: planning. Moved ${attempt}.`);
+          expect((await decideWikiChange(fx.prisma, mine(), id, "apply")).state).toBe("conflict");
+        }
+        const [spent] = (await listWikiChanges(fx.prisma, mine())).filter((c) => c.id === id);
+        expect(spent?.canRetry).toBe(false);
+        expect(await wikiChangeToRetry(fx.prisma, mine(), id)).toBeUndefined();
+        expect(await reopenWikiChange(fx.prisma, mine(), id, replace("Retry Two"))).toBeNull();
+        expect(await body("Retry Two")).toBe(`Status: planning. Moved ${WIKI_RETRY_LIMIT - 1}.`);
+      }));
+
+    it("leaves the change alone when the page moved again and nothing still applies", () =>
+      system(async () => {
+        const id = await conflict("Retry Three");
+        await write("Retry Three", "Status: shipped.");
+        expect(await reopenWikiChange(fx.prisma, mine(), id, replace("Retry Three"))).toBeNull();
+        expect(await body("Retry Three")).toBe("Status: shipped.");
+        const [still] = (await listWikiChanges(fx.prisma, mine())).filter((c) => c.id === id);
+        expect(still?.state).toBe("conflict");
+      }));
+  });
 
   it("refuses to undo over an edit someone made after the change", () =>
     system(async () => {

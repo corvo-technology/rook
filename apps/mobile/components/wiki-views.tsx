@@ -69,18 +69,29 @@ export function WikiList({
 }
 
 export type WikiChangeCardProps = {
-  change: Pick<WikiChange, "state" | "reason" | "pages" | "edits" | "canSeeSource" | "sourceText">;
+  change: Pick<
+    WikiChange,
+    "state" | "reason" | "pages" | "edits" | "canSeeSource" | "sourceText" | "canRetry"
+  >;
   /** An answer is on its way, so the buttons wait. */
   busy?: boolean;
   onDecide: (decision: "apply" | "refuse" | "undo") => void;
   onOpenPage: (title: string) => void;
+  /** Asks for a change that hit a moved page to be written again. */
+  onRetry?: () => void;
 };
 
 /**
  * What the wiki kept, or waits to keep, from a conversation: the pages, why, and the one thing a
  * person can do about it now. Approving and refusing are the phone's part; writing is not.
  */
-export function WikiChangeCard({ change, busy, onDecide, onOpenPage }: WikiChangeCardProps) {
+export function WikiChangeCard({
+  change,
+  busy,
+  onDecide,
+  onOpenPage,
+  onRetry,
+}: WikiChangeCardProps) {
   const { t } = useI18n();
   const styles = useThemedStyles(createStyles);
   const state = {
@@ -133,6 +144,19 @@ export function WikiChangeCard({ change, busy, onDecide, onOpenPage }: WikiChang
             prominence="secondary"
             disabled={busy}
             onPress={() => onDecide("refuse")}
+          />
+        </View>
+      ) : null}
+      {change.state === "conflict" && change.canRetry && onRetry ? (
+        <View style={styles.actions}>
+          <NativeActionButton
+            label={t("Try again")}
+            size="compact"
+            fill={false}
+            variant="text"
+            prominence="secondary"
+            disabled={busy}
+            onPress={onRetry}
           />
         </View>
       ) : null}

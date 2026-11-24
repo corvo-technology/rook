@@ -57,6 +57,20 @@ async function show(props: Partial<WikiChangeCardProps> = {}) {
 }
 
 describe("a card for what the wiki kept", () => {
+  it("offers to try a conflict again only while it can be", async () => {
+    const onRetry = vi.fn();
+    const first = await show({ change: { ...change, state: "conflict", canRetry: true }, onRetry });
+    await first.click("Try again");
+    expect(onRetry).toHaveBeenCalledTimes(1);
+    await act(async () => root?.unmount());
+    document.body.innerHTML = "";
+    const spent = await show({
+      change: { ...change, state: "conflict", canRetry: false },
+      onRetry,
+    });
+    expect(spent.buttons()).not.toContain("Try again");
+  });
+
   it("names each page and, while it waits, offers to approve or refuse", async () => {
     const { container, buttons, click, onDecide } = await show();
     expect(container.querySelector('[data-testid="wiki-change"]')?.getAttribute("data-state")).toBe(

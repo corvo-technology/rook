@@ -14,6 +14,7 @@ export type WikiChangeCardProps = {
     | "canSeeSource"
     | "sourceText"
     | "review"
+    | "canRetry"
   >;
   /** An answer is on its way, so the buttons wait. */
   busy?: boolean;
@@ -118,7 +119,7 @@ export function WikiChangeCard({
           </Button>
         </div>
       ) : null}
-      {change.state === "conflict" && onRetry ? (
+      {change.state === "conflict" && change.canRetry && onRetry ? (
         <div className="pt-1">
           <Button size="sm" variant="ghost" disabled={busy} onClick={onRetry}>
             <Trans>Try again</Trans>

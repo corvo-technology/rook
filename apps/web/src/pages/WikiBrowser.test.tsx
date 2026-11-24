@@ -136,6 +136,10 @@ function fakeApi(seed: Record<string, { body: string; kind?: string }> = {}) {
   const api = {
     review: vi.fn(async () => ({ ok: true as const })),
     changes: {
+      retry: vi.fn(async ({ changeId }: { changeId: string }) => {
+        changes.find((item) => item.id === changeId)!.state = "pending";
+        return { ok: true as const };
+      }),
       list: vi.fn(async ({ state }: { state?: string[] } = {}) =>
         changes.filter((change) => !state || state.includes(change.state)),
       ),
@@ -485,6 +489,24 @@ it("lists what waits for approval, and approving writes it and clears it", async
   await click(button("Approve"));
   expect(api.changes.decide).toHaveBeenCalledWith({ changeId: "c1", decision: "apply" });
   expect(q("wiki-pending")).toBeNull();
+  await unmount();
+});
+
+it("offers to try a conflicting change again and shows it as waiting once rewritten", async () => {
+  const { api, changes } = fakeApi({ Plan: { body: "Status: planning." } });
+  changes.push({ ...waiting("c3", "Plan"), state: "conflict", canRetry: true });
+  const unmount = await mount(api);
+  expect(q("wiki-conflicts")?.textContent).toContain("A page changed since");
+  await click(button("Try again"));
+  expect(api.changes.retry).toHaveBeenCalledWith({ changeId: "c3" });
+  await unmount();
+});
+
+it("does not offer to try again once the retries are used up", async () => {
+  const { api, changes } = fakeApi({ Plan: { body: "Status: planning." } });
+  changes.push({ ...waiting("c4", "Plan"), state: "conflict", canRetry: false });
+  const unmount = await mount(api);
+  expect(q("wiki-conflicts")).toBeNull();
   await unmount();
 });
 

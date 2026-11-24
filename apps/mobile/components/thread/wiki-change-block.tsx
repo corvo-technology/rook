@@ -1,6 +1,6 @@
 import type { WikiChange } from "@corvo/contracts";
 import { useCallback, useEffect, useState } from "react";
-import { decideWikiChange, getWikiChange } from "../../lib/wiki";
+import { decideWikiChange, getWikiChange, retryWikiChange } from "../../lib/wiki";
 import { WikiChangeCard } from "../wiki-views";
 
 /**
@@ -10,6 +10,7 @@ import { WikiChangeCard } from "../wiki-views";
 export function WikiChangeBlock({ changeId }: { changeId: string }) {
   const [change, setChange] = useState<WikiChange | null>(null);
   const [busy, setBusy] = useState(false);
+  const [retrying, setRetrying] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -22,11 +23,26 @@ export function WikiChangeBlock({ changeId }: { changeId: string }) {
     void load();
   }, [load]);
 
+  // The rewrite runs in the background: look again until the change is out of conflict.
+  useEffect(() => {
+    if (!retrying || change?.state !== "conflict") return;
+    const timer = setInterval(() => void load(), 4_000);
+    return () => clearInterval(timer);
+  }, [retrying, change?.state, load]);
+  useEffect(() => {
+    if (change && change.state !== "conflict") setRetrying(false);
+  }, [change]);
+
   if (!change) return null;
   return (
     <WikiChangeCard
       change={change}
-      busy={busy}
+      busy={busy || retrying}
+      onRetry={() => {
+        if (busy || retrying) return;
+        setRetrying(true);
+        void retryWikiChange(changeId).catch(() => setRetrying(false));
+      }}
       onDecide={(decision) => {
         if (busy) return;
         setBusy(true);

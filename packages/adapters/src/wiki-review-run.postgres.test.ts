@@ -9,6 +9,7 @@ import {
   readWikiPage,
   runAsSystem,
   runAsTenant,
+  WIKI_RETRY_LIMIT,
   writeWikiPage,
 } from "@corvo/db";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -203,5 +204,73 @@ postgres("the weekly wiki review (PostgreSQL)", () => {
     const idle = deps("{}");
     await tenant(() => retryWikiChange(idle.value, { ...scope, changeId: change!.id }));
     expect(idle.requests).toHaveLength(0);
+  });
+
+  /** A change whose page moved after it was written, so approving it ends in conflict. */
+  async function conflicting(title: string) {
+    await tenant(() =>
+      writeWikiPage(prisma, scope, { title, body: "Status: planning.\n\nOwner: Ana." }),
+    );
+    const change = await tenant(() =>
+      createWikiChange(prisma, scope, {
+        source: { origin: "message", title: "Kickoff", text: "Now building.", threadId: undefined },
+        ops: [{ op: "replace", page: title, old: "Status: planning.", new: "Status: building." }],
+        reason: "Moved on",
+        anchor: {},
+        edits: "approve",
+      }),
+    );
+    await tenant(() =>
+      writeWikiPage(prisma, scope, { title, body: "Status: planning.\n\nOwner: Rui." }),
+    );
+    await tenant(() => decideWikiChange(prisma, scope, change!.id, "apply"));
+    return change!.id;
+  }
+  const rewrite = (title: string) =>
+    JSON.stringify({
+      changes: [{ op: "replace", page: title, old: "Status: planning.", new: "Status: building." }],
+    });
+  const stateOf = async (id: string) =>
+    (await tenant(() => listWikiChanges(prisma, scope))).find((item) => item.id === id);
+
+  it("stops offering a retry after the limit, so a page that keeps moving cannot loop", async () => {
+    const id = await conflicting("Loop");
+    for (let attempt = 0; attempt < WIKI_RETRY_LIMIT; attempt++) {
+      expect((await stateOf(id))?.canRetry).toBe(true);
+      await tenant(() => retryWikiChange(deps(rewrite("Loop")).value, { ...scope, changeId: id }));
+      expect((await stateOf(id))?.state).toBe("pending");
+      // The page moves again before the person approves.
+      await tenant(() =>
+        writeWikiPage(prisma, scope, {
+          title: "Loop",
+          body: `Status: planning.\n\nOwner: Rui ${attempt}.`,
+        }),
+      );
+      await tenant(() => decideWikiChange(prisma, scope, id, "apply"));
+    }
+    expect((await stateOf(id))?.state).toBe("conflict");
+    expect((await stateOf(id))?.canRetry).toBe(false);
+    const idle = deps(rewrite("Loop"));
+    await tenant(() => retryWikiChange(idle.value, { ...scope, changeId: id }));
+    expect(idle.requests).toHaveLength(0);
+  });
+
+  it("never overwrites a page that moves again while the model is rewriting", async () => {
+    const id = await conflicting("Race");
+    const d = deps(rewrite("Race"));
+    const run = d.value.runtime.run.bind(d.value.runtime);
+    d.value.runtime.run = async function* (request: AgentRunRequest, context: never) {
+      // Someone saves the page after the curator read it and before its answer is used.
+      await tenant(() =>
+        writeWikiPage(prisma, scope, { title: "Race", body: "Status: shipped.\n\nOwner: Rui." }),
+      );
+      yield* run(request, context);
+    } as never;
+    await tenant(() => retryWikiChange(d.value, { ...scope, changeId: id }));
+    // Nothing still applies to the newer page, so the change stays in conflict.
+    expect((await stateOf(id))?.state).toBe("conflict");
+    expect((await tenant(() => readWikiPage(prisma, scope, "Race")))?.body).toContain(
+      "Status: shipped.",
+    );
   });
 });

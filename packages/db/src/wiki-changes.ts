@@ -50,6 +50,8 @@ export type WikiChangeRecord = {
   sourceUserId: string;
   /** Found by the review of the pages themselves, so it says nothing private. */
   review: boolean;
+  /** A conflict that wrote nothing and has retries left. */
+  canRetry: boolean;
 };
 
 type Revisions = Record<string, number>;
@@ -64,6 +66,7 @@ type Row = {
   ops: unknown;
   baseRevisions: unknown;
   appliedRevisions: unknown;
+  retries: number;
   createdAt: Date;
   anchorThreadId: string | null;
   anchorMessageId: string | null;
@@ -75,6 +78,15 @@ type Row = {
     origin: string;
   };
 };
+
+/** How many times a conflicting change is written again before a person is left to redo it. */
+export const WIKI_RETRY_LIMIT = 3;
+
+/** Only a change that wrote nothing can be tried again, and only a few times. */
+const canRetry = (row: Row) =>
+  row.state === "conflict" &&
+  row.retries < WIKI_RETRY_LIMIT &&
+  !Object.keys(revisionsOf(row.appliedRevisions)).length;
 
 const opsOf = (row: Row) => row.ops as CuratorOp[];
 const revisionsOf = (value: unknown): Revisions => (value ?? {}) as Revisions;
@@ -129,6 +141,7 @@ function recordOf(row: Row): WikiChangeRecord {
     sourceText: row.source.text,
     sourceUserId: row.source.userId,
     review: row.source.origin === "review",
+    canRetry: canRetry(row),
   };
 }
 
@@ -504,7 +517,8 @@ export async function advanceWikiCursor(
 
 /**
  * What trying a conflicting change again starts from; undefined when it cannot be tried again.
- * Only a change that wrote nothing can be: one that wrote pages is put right by undoing it.
+ * Only a change that wrote nothing can be, and only up to the retry limit: one that wrote pages is
+ * put right by undoing it.
  */
 export async function wikiChangeToRetry(
   db: PrismaClient,
@@ -515,7 +529,7 @@ export async function wikiChangeToRetry(
     where: { id: changeId, spaceId: scope.spaceId, state: "conflict" },
     include: INCLUDE,
   })) as Row | null;
-  if (!row || Object.keys(revisionsOf(row.appliedRevisions)).length) return undefined;
+  if (!row || !canRetry(row)) return undefined;
   return { ops: opsOf(row), sourceText: row.source.text };
 }
 
@@ -534,8 +548,14 @@ export async function reopenWikiChange(
   const { kept, base } = await plan(db, scope, ops);
   if (!kept.length) return null;
   const { count } = await db.wikiChange.updateMany({
-    where: { id: changeId, spaceId: scope.spaceId, state: "conflict" },
+    where: {
+      id: changeId,
+      spaceId: scope.spaceId,
+      state: "conflict",
+      retries: { lt: WIKI_RETRY_LIMIT },
+    },
     data: {
+      retries: { increment: 1 },
       ops: kept,
       baseRevisions: base,
       appliedRevisions: {},

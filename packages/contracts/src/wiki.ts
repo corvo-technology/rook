@@ -100,6 +100,8 @@ export const WikiChangeSchema = z.object({
   sourceText: z.string().optional(),
   /** Found by the review of the pages, not drawn from a conversation: a problem to look at. */
   review: z.boolean().optional(),
+  /** A conflict that can be written again against the pages as they are now. */
+  canRetry: z.boolean().optional(),
 });
 export type WikiChange = z.infer<typeof WikiChangeSchema>;
 

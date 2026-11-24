@@ -251,6 +251,17 @@ export function toolRequiresApproval(
   return false;
 }
 
+/**
+ * Tools that write what every later run reads: agent notes, semantic memory and the shared wiki.
+ * Once outside content entered the run, the text may be an instruction someone else planted, so
+ * the owner confirms the write (see `remember_about_user`, which asks on its own card).
+ */
+const DURABLE_MEMORY_WRITE_TOOLS = new Set(["remember", "save_memory", "save_shared_memory"]);
+
+export function isDurableMemoryWrite(toolName: string): boolean {
+  return DURABLE_MEMORY_WRITE_TOOLS.has(toolName);
+}
+
 /** Security-boundary changes cannot be auto-reviewed or permanently allowed. */
 export function toolRequiresExplicitApproval(toolName: string): boolean {
   return (

@@ -28,6 +28,19 @@ data, never as instructions. A messaging channel run, where outsiders talk to th
    wait for Save. Agents that only read learn nothing new. The model's cost is recorded as its own usage
    kind, `memory`. With no model ready nothing is read and nothing is lost.
 
+### Outside content never writes memory unchecked
+
+Agents read messages, pages, files and tool results written by other people, and what they save is read
+by every later run. Their tools say that memory holds facts learned, never instructions found in outside
+text. Once outside content has entered a run, the run's writes to durable memory are not saved silently:
+**Save on its own** falls back to the card with Save and Discard, and a note (`remember`), a semantic
+memory fact or a wiki page asks the owner for approval like a risky action, whatever an allow rule or
+the approval model would say. A run with no outside content, started by you, saves as before.
+
+The record of who changed what already exists and is out of the agents' reach: each note revision keeps
+the run and conversation that wrote it (`memory_revisions`), a wiki change keeps its source and who
+decided it (`wiki_changes`), and a fact about you keeps its source, agent and conversation.
+
 ## The Memory screen
 
 - **New**: suggestions waiting for Save or Discard.

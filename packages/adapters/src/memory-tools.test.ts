@@ -1,5 +1,6 @@
 import type { ConnectorTool } from "@corvo/adapter-kit";
 import { describe, expect, it } from "vitest";
+import { builtinAgentTools, MEMORY_HOLDS_FACTS } from "./builtin-tools.js";
 import { appendMemoryFact, selectMemoryTools } from "./memory-tools.js";
 
 function tool(name: string): ConnectorTool {
@@ -97,4 +98,14 @@ describe("multiline memory facts", () => {
       expect(appendMemoryFact(existing, "Office:\nBerlin")).toBe(`${existing}Office:\nBerlin\n`);
     }
   });
+});
+
+describe("the memory rule in tool descriptions", () => {
+  it.each(["remember", "remember_about_user", "save_memory", "save_shared_memory"])(
+    "%s carries the facts-only rule",
+    (name) => {
+      const tool = builtinAgentTools.find((candidate) => candidate.name === name);
+      expect(tool?.description).toContain(MEMORY_HOLDS_FACTS);
+    },
+  );
 });

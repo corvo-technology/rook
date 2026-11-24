@@ -6,8 +6,8 @@
   "rubricVersion": "harness-prose-v1",
   "tokenEstimator": "adapters/context-selection estimateTextTokens",
   "cacheSimulation": "prefix-cache-v2",
-  "startedAt": "2026-11-21T01:29:06.476Z",
-  "codeRevision": "ff9da639f21fc31fd6182583ac9cadd67b242f29",
+  "startedAt": "2026-11-24T00:13:41.590Z",
+  "codeRevision": "a11e81100bfdd270d68318921c0589eef8863146",
   "subject": null,
   "judgeCostUsd": null,
   "subjectCostUsd": null,
@@ -36,14 +36,14 @@
       "metrics": {
         "inputTokens": 20,
         "cacheReadTokens": 0,
-        "cacheWriteTokens": 8228,
+        "cacheWriteTokens": 5972,
         "outputTokens": 11,
         "modelCalls": 1,
         "toolCalls": 0,
-        "schemaTokensPerCall": 8100,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 1406,
-        "firstVisibleTextMs": 1334
+        "schemaTokensPerCall": 5844,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 252,
+        "firstVisibleTextMs": 239
       },
       "error": null
     },
@@ -73,14 +73,14 @@
       "metrics": {
         "inputTokens": 14,
         "cacheReadTokens": 0,
-        "cacheWriteTokens": 8228,
+        "cacheWriteTokens": 5972,
         "outputTokens": 11,
         "modelCalls": 1,
         "toolCalls": 0,
-        "schemaTokensPerCall": 8100,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 140,
-        "firstVisibleTextMs": 139
+        "schemaTokensPerCall": 5844,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 19,
+        "firstVisibleTextMs": 18
       },
       "error": null
     },
@@ -106,15 +106,15 @@
       "prose": null,
       "metrics": {
         "inputTokens": 93,
-        "cacheReadTokens": 8184,
-        "cacheWriteTokens": 8213,
+        "cacheReadTokens": 5991,
+        "cacheWriteTokens": 6020,
         "outputTokens": 31,
         "modelCalls": 2,
         "toolCalls": 1,
-        "schemaTokensPerCall": 8025,
-        "schemaTokensFirstCall": 8025,
-        "wallMs": 190,
-        "firstVisibleTextMs": 187
+        "schemaTokensPerCall": 5832,
+        "schemaTokensFirstCall": 5832,
+        "wallMs": 28,
+        "firstVisibleTextMs": 27
       },
       "error": null
     },
@@ -143,15 +143,15 @@
       },
       "metrics": {
         "inputTokens": 130,
-        "cacheReadTokens": 16622,
-        "cacheWriteTokens": 8348,
+        "cacheReadTokens": 12110,
+        "cacheWriteTokens": 6092,
         "outputTokens": 58,
         "modelCalls": 3,
         "toolCalls": 2,
-        "schemaTokensPerCall": 8100,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 185,
-        "firstVisibleTextMs": 182
+        "schemaTokensPerCall": 5844,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 29,
+        "firstVisibleTextMs": 28
       },
       "error": null
     },
@@ -177,15 +177,15 @@
       "prose": null,
       "metrics": {
         "inputTokens": 159,
-        "cacheReadTokens": 25177,
-        "cacheWriteTokens": 8498,
+        "cacheReadTokens": 18409,
+        "cacheWriteTokens": 6242,
         "outputTokens": 97,
         "modelCalls": 4,
         "toolCalls": 4,
-        "schemaTokensPerCall": 8100,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 312,
-        "firstVisibleTextMs": 159
+        "schemaTokensPerCall": 5844,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 45,
+        "firstVisibleTextMs": 44
       },
       "error": null
     },
@@ -219,15 +219,15 @@
       "prose": null,
       "metrics": {
         "inputTokens": 356,
-        "cacheReadTokens": 64355,
-        "cacheWriteTokens": 9812,
+        "cacheReadTokens": 48563,
+        "cacheWriteTokens": 7556,
         "outputTokens": 558,
         "modelCalls": 8,
         "toolCalls": 16,
-        "schemaTokensPerCall": 8100,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 521,
-        "firstVisibleTextMs": 513
+        "schemaTokensPerCall": 5844,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 57,
+        "firstVisibleTextMs": 55
       },
       "error": null
     },
@@ -256,15 +256,15 @@
       ],
       "prose": null,
       "metrics": {
-        "inputTokens": 1071,
-        "cacheReadTokens": 29086,
-        "cacheWriteTokens": 7191,
+        "inputTokens": 108,
+        "cacheReadTokens": 5708,
+        "cacheWriteTokens": 5710,
         "outputTokens": 22,
-        "modelCalls": 5,
+        "modelCalls": 2,
         "toolCalls": 1,
-        "schemaTokensPerCall": 6999,
-        "schemaTokensFirstCall": 6999,
-        "wallMs": 136,
+        "schemaTokensPerCall": 5518,
+        "schemaTokensFirstCall": 5518,
+        "wallMs": 15,
         "firstVisibleTextMs": null
       },
       "error": null
@@ -298,15 +298,15 @@
       },
       "metrics": {
         "inputTokens": 143,
-        "cacheReadTokens": 14501,
-        "cacheWriteTokens": 7257,
+        "cacheReadTokens": 11539,
+        "cacheWriteTokens": 5776,
         "outputTokens": 65,
         "modelCalls": 3,
         "toolCalls": 2,
-        "schemaTokensPerCall": 6999,
-        "schemaTokensFirstCall": 6999,
-        "wallMs": 182,
-        "firstVisibleTextMs": 180
+        "schemaTokensPerCall": 5518,
+        "schemaTokensFirstCall": 5518,
+        "wallMs": 20,
+        "firstVisibleTextMs": 19
       },
       "error": null
     },
@@ -335,16 +335,16 @@
       ],
       "prose": null,
       "metrics": {
-        "inputTokens": 474,
-        "cacheReadTokens": 16981,
-        "cacheWriteTokens": 8392,
+        "inputTokens": 502,
+        "cacheReadTokens": 12497,
+        "cacheWriteTokens": 6136,
         "outputTokens": 90,
         "modelCalls": 3,
         "toolCalls": 2,
-        "schemaTokensPerCall": 8100,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 176,
-        "firstVisibleTextMs": 161
+        "schemaTokensPerCall": 5844,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 26,
+        "firstVisibleTextMs": 25
       },
       "error": null
     },
@@ -375,14 +375,14 @@
       "metrics": {
         "inputTokens": 25,
         "cacheReadTokens": 0,
-        "cacheWriteTokens": 8336,
+        "cacheWriteTokens": 6080,
         "outputTokens": 42,
         "modelCalls": 1,
         "toolCalls": 1,
-        "schemaTokensPerCall": 8208,
-        "schemaTokensFirstCall": 8208,
-        "wallMs": 30,
-        "firstVisibleTextMs": 29
+        "schemaTokensPerCall": 5952,
+        "schemaTokensFirstCall": 5952,
+        "wallMs": 11,
+        "firstVisibleTextMs": 11
       },
       "error": null
     },
@@ -412,15 +412,15 @@
       "prose": null,
       "metrics": {
         "inputTokens": 341,
-        "cacheReadTokens": 17285,
-        "cacheWriteTokens": 8710,
+        "cacheReadTokens": 12773,
+        "cacheWriteTokens": 6454,
         "outputTokens": 159,
         "modelCalls": 3,
         "toolCalls": 3,
-        "schemaTokensPerCall": 8311,
-        "schemaTokensFirstCall": 8311,
-        "wallMs": 117,
-        "firstVisibleTextMs": 113
+        "schemaTokensPerCall": 6055,
+        "schemaTokensFirstCall": 6055,
+        "wallMs": 27,
+        "firstVisibleTextMs": 26
       },
       "error": null
     },
@@ -446,15 +446,15 @@
       "prose": null,
       "metrics": {
         "inputTokens": 122,
-        "cacheReadTokens": 8481,
-        "cacheWriteTokens": 8545,
+        "cacheReadTokens": 6225,
+        "cacheWriteTokens": 6289,
         "outputTokens": 123,
         "modelCalls": 2,
         "toolCalls": 2,
-        "schemaTokensPerCall": 8317,
-        "schemaTokensFirstCall": 8317,
-        "wallMs": 158,
-        "firstVisibleTextMs": 152
+        "schemaTokensPerCall": 6061,
+        "schemaTokensFirstCall": 6061,
+        "wallMs": 17,
+        "firstVisibleTextMs": 17
       },
       "error": null
     },
@@ -480,15 +480,15 @@
       "prose": null,
       "metrics": {
         "inputTokens": 57,
-        "cacheReadTokens": 8246,
-        "cacheWriteTokens": 8285,
+        "cacheReadTokens": 5990,
+        "cacheWriteTokens": 6029,
         "outputTokens": 30,
         "modelCalls": 2,
         "toolCalls": 1,
-        "schemaTokensPerCall": 8100,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 212,
-        "firstVisibleTextMs": 210
+        "schemaTokensPerCall": 5844,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 16,
+        "firstVisibleTextMs": 15
       },
       "error": null
     },
@@ -514,15 +514,15 @@
       "prose": null,
       "metrics": {
         "inputTokens": 103,
-        "cacheReadTokens": 16577,
-        "cacheWriteTokens": 8339,
+        "cacheReadTokens": 12065,
+        "cacheWriteTokens": 6083,
         "outputTokens": 53,
         "modelCalls": 3,
         "toolCalls": 2,
-        "schemaTokensPerCall": 8100,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 321,
-        "firstVisibleTextMs": 276
+        "schemaTokensPerCall": 5844,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 21,
+        "firstVisibleTextMs": 20
       },
       "error": null
     },
@@ -556,14 +556,14 @@
       "metrics": {
         "inputTokens": 56,
         "cacheReadTokens": 0,
-        "cacheWriteTokens": 8336,
+        "cacheWriteTokens": 6080,
         "outputTokens": 21,
         "modelCalls": 1,
         "toolCalls": 0,
-        "schemaTokensPerCall": 8208,
-        "schemaTokensFirstCall": 8208,
-        "wallMs": 109,
-        "firstVisibleTextMs": 91
+        "schemaTokensPerCall": 5952,
+        "schemaTokensFirstCall": 5952,
+        "wallMs": 10,
+        "firstVisibleTextMs": 9
       },
       "error": null
     },
@@ -590,14 +590,14 @@
       "metrics": {
         "inputTokens": 102,
         "cacheReadTokens": 0,
-        "cacheWriteTokens": 16313,
+        "cacheWriteTokens": 11801,
         "outputTokens": 180,
         "modelCalls": 2,
         "toolCalls": 1,
-        "schemaTokensPerCall": 8029,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 57,
-        "firstVisibleTextMs": 25
+        "schemaTokensPerCall": 5773,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 19,
+        "firstVisibleTextMs": 10
       },
       "error": null
     },
@@ -624,14 +624,14 @@
       "metrics": {
         "inputTokens": 227,
         "cacheReadTokens": 0,
-        "cacheWriteTokens": 8228,
+        "cacheWriteTokens": 5972,
         "outputTokens": 16,
         "modelCalls": 1,
         "toolCalls": 0,
-        "schemaTokensPerCall": 8100,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 31,
-        "firstVisibleTextMs": 30
+        "schemaTokensPerCall": 5844,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 10,
+        "firstVisibleTextMs": 9
       },
       "error": null
     },
@@ -657,15 +657,15 @@
       "prose": null,
       "metrics": {
         "inputTokens": 2284,
-        "cacheReadTokens": 8261,
-        "cacheWriteTokens": 8287,
+        "cacheReadTokens": 6005,
+        "cacheWriteTokens": 6031,
         "outputTokens": 28,
         "modelCalls": 2,
         "toolCalls": 1,
-        "schemaTokensPerCall": 8100,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 267,
-        "firstVisibleTextMs": 263
+        "schemaTokensPerCall": 5844,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 17,
+        "firstVisibleTextMs": 16
       },
       "error": null
     },
@@ -687,15 +687,15 @@
       "prose": null,
       "metrics": {
         "inputTokens": 47,
-        "cacheReadTokens": 8252,
-        "cacheWriteTokens": 8293,
+        "cacheReadTokens": 5996,
+        "cacheWriteTokens": 6037,
         "outputTokens": 35,
         "modelCalls": 2,
         "toolCalls": 1,
-        "schemaTokensPerCall": 8100,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 100,
-        "firstVisibleTextMs": 93
+        "schemaTokensPerCall": 5844,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 15,
+        "firstVisibleTextMs": 14
       },
       "error": null
     },
@@ -720,16 +720,16 @@
       ],
       "prose": null,
       "metrics": {
-        "inputTokens": 57,
-        "cacheReadTokens": 8254,
-        "cacheWriteTokens": 8323,
-        "outputTokens": 61,
-        "modelCalls": 2,
-        "toolCalls": 1,
-        "schemaTokensPerCall": 8100,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 93,
-        "firstVisibleTextMs": 90
+        "inputTokens": 1707,
+        "cacheReadTokens": 13705,
+        "cacheWriteTokens": 6139,
+        "outputTokens": 90,
+        "modelCalls": 3,
+        "toolCalls": 2,
+        "schemaTokensPerCall": 5844,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 29,
+        "firstVisibleTextMs": 28
       },
       "error": null
     },
@@ -759,15 +759,15 @@
       "prose": null,
       "metrics": {
         "inputTokens": 162,
-        "cacheReadTokens": 25081,
-        "cacheWriteTokens": 8407,
+        "cacheReadTokens": 18313,
+        "cacheWriteTokens": 6151,
         "outputTokens": 77,
         "modelCalls": 4,
         "toolCalls": 3,
-        "schemaTokensPerCall": 8100,
-        "schemaTokensFirstCall": 8100,
-        "wallMs": 337,
-        "firstVisibleTextMs": 334
+        "schemaTokensPerCall": 5844,
+        "schemaTokensFirstCall": 5844,
+        "wallMs": 27,
+        "firstVisibleTextMs": 25
       },
       "error": null
     },
@@ -792,16 +792,16 @@
       ],
       "prose": null,
       "metrics": {
-        "inputTokens": 100,
-        "cacheReadTokens": 17284,
-        "cacheWriteTokens": 8694,
-        "outputTokens": 51,
-        "modelCalls": 3,
-        "toolCalls": 2,
-        "schemaTokensPerCall": 8446,
-        "schemaTokensFirstCall": 8446,
-        "wallMs": 169,
-        "firstVisibleTextMs": 162
+        "inputTokens": 345,
+        "cacheReadTokens": 18736,
+        "cacheWriteTokens": 6191,
+        "outputTokens": 88,
+        "modelCalls": 4,
+        "toolCalls": 3,
+        "schemaTokensPerCall": 5860,
+        "schemaTokensFirstCall": 5860,
+        "wallMs": 27,
+        "firstVisibleTextMs": 25
       },
       "error": null
     }
@@ -811,15 +811,15 @@
     "pass": 22,
     "fail": 0,
     "unqualified": 0,
-    "inputTokens": 6143,
-    "cacheReadTokens": 292627,
-    "cacheWriteTokens": 191263,
-    "outputTokens": 1819,
-    "modelCalls": 58,
-    "toolCalls": 46,
-    "wallMs": 5249,
-    "schemaTokensPerCall": 7983,
-    "schemaTokensFirstCall": 8042,
+    "inputTokens": 7103,
+    "cacheReadTokens": 214625,
+    "cacheWriteTokens": 140813,
+    "outputTokens": 1885,
+    "modelCalls": 57,
+    "toolCalls": 48,
+    "wallMs": 737,
+    "schemaTokensPerCall": 5836,
+    "schemaTokensFirstCall": 5844,
     "firstVisibleTextMs": null
   }
 }

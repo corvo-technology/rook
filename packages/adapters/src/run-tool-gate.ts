@@ -18,6 +18,7 @@ import {
   connectorToolRisk,
   displayName,
   effectiveApprovalMode,
+  isDurableMemoryWrite,
   newSiteOutcome,
   outboundSiteGate,
   outboundUrlLeak,
@@ -298,8 +299,12 @@ export async function gateToolCall(
     (name === "schedule_create" || (name === "schedule_update" && Boolean(args.prompt))) &&
     (await isRunTainted(ctx)) &&
     (await ctx.trust.routineNamesNewSite(String(args.prompt ?? "")));
+  // Memory is read by every later run, so text that outside content put in this run is not saved
+  // unchecked: the owner confirms it.
+  const memoryWriteSteered = isDurableMemoryWrite(name) && (await isRunTainted(ctx));
   const requiresApprovalByDefault =
     commandWatch ||
+    memoryWriteSteered ||
     requiresUnattendedApproval ||
     siteGate === "new" ||
     unidentifiedAction ||
@@ -318,6 +323,7 @@ export async function gateToolCall(
   const gated = requiresApprovalByDefault || connectorReadGated;
   const requiresMandatoryApproval =
     commandWatch ||
+    memoryWriteSteered ||
     scheduleNamesNewSite ||
     requiresUnattendedApproval ||
     toolRequiresExplicitApproval(name);
